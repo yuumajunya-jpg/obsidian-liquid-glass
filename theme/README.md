@@ -118,7 +118,10 @@ body {
   重なりません（`--lg-top-gap = --lg-gap + --lg-btn-strip` を上端だけに足している）。
   色は macOS 準拠（最小化=黄 / 最大化=緑 / 閉じる=赤、縁は少し濃い同色）、アイコンは
   普段は隠してホバー時だけ薄く出します。ボタン用に空ける幅 `--frame-right-space` も丸の
-  大きさに合わせて詰めています。サイズや色は `--lg-btn-*` で調整できます。
+  大きさに合わせて詰めています。サイズ・色は `--lg-btn-*` で調整できます
+  （丸＝`--lg-btn-size`、ホバー時のアイコン＝`--lg-btn-glyph-size` / `--lg-btn-glyph`）。
+  アイコンは `<svg class="svg-icon">` とは限らない（class 無しの svg／擬似要素の背景画像・
+  マスク）ため、大きさの指定はそれら全部に当たるようにまとめて書いています。
   なお既定はボタンを並べる箱（`.titlebar-button-container.mod-right`）に
   `--titlebar-background(-focused)` を敷きます。これは「枠なし＋フォーカス中」のときだけ
   詳細度が上がる（`(0,5,0)`）ため、`transparent !important` で打ち消しています

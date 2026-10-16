@@ -435,6 +435,8 @@ body.is-hidden-frameless:not(.is-mobile) {
   --lg-btn-max-rim: #1aab29;
   --lg-btn-close: #ff5f57;
   --lg-btn-close-rim: #e0443e;
+  /* ホバー時に丸の中に出るアイコンの大きさと色。 */
+  --lg-btn-glyph-size: 7px;
   --lg-btn-glyph: rgba(0, 0, 0, 0.5);
   /* タブ行がボタン用に空ける幅。既定は Windows の大きなボタン用に 126px あるが、
      丸は小さいので必要な分だけに詰める（そのぶんタブが広く使える）。 */
@@ -508,10 +510,26 @@ body.is-hidden-frameless:not(.is-mobile) .titlebar-button.mod-close:hover {
   box-shadow: inset 0 0 0 0.5px var(--lg-btn-close-rim);
 }
 
-/* アイコンが .svg-icon で描かれている場合の仕上げ（小さく・細く・暗く）。 */
+/* アイコンの大きさ。既定は 16px（--icon-s）で丸からはみ出すため小さくする。
+   実体が <svg class="svg-icon"> とは限らない（svg に class が無い／擬似要素の
+   背景画像やマスク／要素自身がマスク、など描かれ方に幅がある）ので、どの形でも
+   同じ大きさになるようまとめて当てる。値は --lg-btn-glyph-size ひとつ。
+   マスク系は画像が無ければ何も起きないので、一緒に書いておいて害はない。 */
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo) svg,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo) .svg-icon,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo)::before,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo)::after {
+  width: var(--lg-btn-glyph-size) !important;
+  height: var(--lg-btn-glyph-size) !important;
+  background-size: var(--lg-btn-glyph-size) var(--lg-btn-glyph-size) !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  -webkit-mask-size: var(--lg-btn-glyph-size) var(--lg-btn-glyph-size);
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+/* 色は .svg-icon のときだけ（背景画像・マスクの場合は画像側の色になる）。 */
 body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo) .svg-icon {
-  width: 7px;
-  height: 7px;
   color: var(--lg-btn-glyph);
 }
 /* 既定は close ホバー時に fill/stroke を白にするので、暗い色で塗り直す。 */
