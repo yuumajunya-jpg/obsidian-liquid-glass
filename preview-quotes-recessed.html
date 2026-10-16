@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>引用（窪み案） — Liquid Glass</title>
+<link rel="stylesheet" href="obsidian-default.css">
+<link rel="stylesheet" href="theme/theme.css">
+<style>
+  /* mock-only。引用を「面が沈んだ（inset）ガラス」にする案。
+     トークンはテーマのものだけを使っています（--lg-well はコードブロックで使っている凹みの色）。 */
+  html { zoom: 0.618; }
+  html, body { height: 100%; }
+  .workspace-split { height: 100%; }
+  .workspace-split.mod-root { flex: 1 1 auto !important; width: auto !important; min-width: 0; }
+  .markdown-preview-view { --file-line-width: 46em; }
+
+  /* 各案の中の引用は、まず形をまっさらにしてから作る */
+  .variant blockquote {
+    background-color: transparent;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: var(--size-4-2) var(--size-4-4);
+    margin-block: 1.2em;
+    margin-inline: 0;
+  }
+  .variant blockquote::before {
+    content: none;
+  }
+  .variant > .label,
+  .variant-note {
+    font-family: var(--font-monospace);
+    font-size: var(--font-ui-smaller);
+    color: var(--text-faint);
+  }
+  .variant > .label { margin: 2.4em 0 -0.6em; }
+  .variant-note { font-size: var(--font-ui-small); color: var(--text-muted); }
+
+  /* 背表紙（V1 と同じ作り：カードと同形の ::before ＋ 横グラデ ＋ 縦マスク） */
+  .spine::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    background-image: linear-gradient(
+      to right,
+      var(--color-accent) 0,
+      color-mix(in srgb, var(--color-accent) 80%, transparent) 3px,
+      transparent 3px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.25) 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.25) 100%);
+  }
+
+  /* ── R1 窪み（基本）───────────────────────────────────────────────
+     面を暗く沈め、上辺の内側に影、下辺の内側に光を入れる（彫り込んだ感じ）。 */
+  .r1 blockquote {
+    position: relative;
+    background-color: var(--lg-well);
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.36),
+      inset 0 -1px 0 var(--lg-rim-top-soft);
+  }
+
+  /* ── R2 窪み ＋ 背表紙 ────────────────────────────────────────── */
+  .r2 blockquote {
+    position: relative;
+    background-color: var(--lg-well);
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.36),
+      inset 0 -1px 0 var(--lg-rim-top-soft);
+  }
+
+  /* ── R3 左からアクセントの光が漏れる ─────────────────────────────
+     線を引かず、窪みの左端にアクセント色の内側グローを落とす。 */
+  .r3 blockquote {
+    position: relative;
+    background-color: var(--lg-well);
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow:
+      inset 4px 0 14px -6px color-mix(in srgb, var(--color-accent) 85%, transparent),
+      inset 0 2px 4px rgba(0, 0, 0, 0.36),
+      inset 0 -1px 0 var(--lg-rim-top-soft);
+  }
+
+  /* ── R4 浅い窪み（ガラスの面のまま沈む）──────────────────────────
+     面の色は今までどおり明るいまま。外側の影とハイライトをやめて、
+     内側の影だけにする＝パネルに軽く押し込んだ感じ。 */
+  .r4 blockquote {
+    position: relative;
+    background-color: var(--lg-quote);
+    border: 1px solid var(--lg-rim-outline);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.28),
+      inset 0 -1px 0 var(--lg-rim-top-soft);
+  }
+
+  /* ── R5 ガラス越しの窪み（背景を暗くする）────────────────────────
+     面を黒く塗るのではなく、背景を backdrop-filter で暗くする。 */
+  .r5 blockquote {
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.10);
+    -webkit-backdrop-filter: blur(14px) brightness(0.86) saturate(120%);
+    backdrop-filter: blur(14px) brightness(0.86) saturate(120%);
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.30),
+      inset 0 -1px 0 var(--lg-rim-top-soft);
+  }
+</style>
+</head>
+<body class="theme-dark is-frameless show-ribbon">
+
+<div class="app-container">
+  <div class="horizontal-main-container">
+    <div class="workspace">
+      <div class="workspace-split mod-vertical mod-root">
+        <div class="workspace-tabs mod-top">
+          <div class="workspace-tab-header-container">
+            <div class="workspace-tab-header-container-inner">
+              <div class="workspace-tab-header is-active">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">📝</div>
+                  <div class="workspace-tab-header-inner-title">引用（窪み案）</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-leaf">
+            <div class="workspace-leaf-content" data-type="markdown">
+              <div class="view-content">
+                <div class="markdown-preview-view markdown-rendered">
+
+                  <h1>引用を「窪み」にする案</h1>
+                  <p class="variant-note">
+                    面が浮いている（外側に影・上辺にハイライト）代わりに、
+                    面を沈める（内側に影・下辺に光）方向の案です。
+                    コードブロックと同じ <code>--lg-well</code> を使うと、ノートの中の「凹み」の言葉が揃います。
+                  </p>
+
+                  <h2>いまの実装（浮いたカード ＋ 背表紙）</h2>
+                  <p class="variant-note">比較用。テーマのルールがそのまま効いています。</p>
+                  <blockquote>
+                    <p>ガラスのカードが浮いていて、左端にアクセントの背表紙。光は上から当たっている。</p>
+                  </blockquote>
+
+                  <!-- R1 -->
+                  <div class="variant r1">
+                    <p class="label">R1 — 窪み（基本）</p>
+                    <blockquote>
+                      <p>面を暗く沈め、上辺の内側に影、下辺の内側に光。<strong>彫り込んだ</strong>見た目になる。</p>
+                      <p>浮いたカードより静かで、本文のリズムを崩しにくい。</p>
+                    </blockquote>
+                  </div>
+
+                  <!-- R2 -->
+                  <div class="variant r2 spine">
+                    <p class="label">R2 — 窪み ＋ 背表紙（いまの線は残す）</p>
+                    <blockquote>
+                      <p>窪みの中にアクセントの背表紙。線があるぶん「引用」だと分かりやすい。</p>
+                      <blockquote><p>入れ子はテーマ側の処理で細い線だけになる。</p></blockquote>
+                    </blockquote>
+                  </div>
+
+                  <!-- R3 -->
+                  <div class="variant r3">
+                    <p class="label">R3 — 窪みの左から光が漏れる（線をやめる）</p>
+                    <blockquote>
+                      <p>線を引かず、窪みの左端にアクセント色の光を落とす。ガラスの縁から色が滲む感じで、いちばん「liquid」寄り。</p>
+                      <p>色は面全体には乗らないので、長文でも邪魔になりにくい。</p>
+                    </blockquote>
+                  </div>
+
+                  <!-- R4 -->
+                  <div class="variant r4 spine">
+                    <p class="label">R4 — 浅い窪み（面はガラスのまま）</p>
+                    <blockquote>
+                      <p>面の明るさは今までどおりで、外側の影とハイライトだけをやめた案。パネルに軽く押し込んだ程度の沈み方。</p>
+                      <p>変化が小さいので、いまの見た目を壊したくないときはこれ。</p>
+                    </blockquote>
+                  </div>
+
+                  <!-- R5 -->
+                  <div class="variant r5 spine">
+                    <p class="label">R5 — ガラス越しの窪み（背景を暗くする）</p>
+                    <blockquote>
+                      <p>黒く塗るのではなく、<code>backdrop-filter</code> で背景そのものを暗くする。厚いガラス板を沈めた感じで、下の壁紙の色がうっすら残る。</p>
+                      <p>いちばん「ガラス」らしいが、動作は少し重くなる。</p>
+                    </blockquote>
+                  </div>
+
+                  <p class="variant-note">
+                    どの案でも、編集中（ライブプレビュー）は行ごとの矩形になるため、
+                    <code>--blockquote-background-color</code> で「面の色」だけ揃える形になります
+                    （内側の影・グローは読み取り表示だけ）。
+                  </p>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
