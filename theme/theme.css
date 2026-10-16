@@ -372,43 +372,36 @@ body {
      隠しフレーム表示のときだけ下で 0 以外にする。 */
   --lg-btn-strip: 0px;
   --lg-top-gap: calc(var(--lg-gap) + var(--lg-btn-strip));
-  /* 上端のドラッグ帯から除外する幅（ウィンドウ操作ボタンが乗る範囲）。
-     帯がボタンを覆うと、Electron がクリックをドラッグ操作として吸ってしまい
-     ボタンが押せなくなるため、右端はこの幅だけ空ける。 */
-  --lg-ctrl-reserve: 0px;
 }
 
 /* --------------------------------------------------------------------------
-   上端のドラッグ領域
+   上端のドラッグ領域（＝タイトルバー）
    --------------------------------------------------------------------------
-   枠なし（hidden frameless）では既定の .titlebar が pointer-events: none で
-   消え、ウィンドウの移動はタブバーの空き部分に頼ることになる。タブを多く
-   開くとその空きが狭くなって掴みにくいので、パネルの外側（上端のすき間）
-   にもドラッグ領域を足す。すき間には要素が無いので操作を奪わない。
-   ・高さは --lg-top-gap（＝--lg-gap + --lg-btn-strip）。広く取りたいときは
-     Style Settings の「すき間」を広げる
-   ・右端は --lg-ctrl-reserve ぶん空ける。ウィンドウ操作ボタンがこの帯と
-     重なると、Electron がクリックをドラッグとして吸って押せなくなるため
+   枠なし（hidden frameless）では、ウィンドウの移動がタブバーの空き部分頼みに
+   なり、タブを多く開くと掴みにくい。そこで Electron の作法どおり、タイトル
+   バー自体を「上端の帯」の高さにしてドラッグ領域にする。
+   タイトルバーはウィンドウ操作ボタンの親なので、ボタン既定の
+   -webkit-app-region: no-drag がそのまま効く。＝「ボタンがドラッグ領域と
+   重なってクリックを吸われる」問題が起きず、帯のどこでも移動できてボタンも
+   押せる。
+   ・帯の高さは --lg-top-gap（＝--lg-gap + --lg-btn-strip）。
+     広く取りたいときは Style Settings の「すき間」を広げる
    ・左右と下辺はドラッグにしない（ウィンドウのリサイズを妨げないため）
-   ・パネルやモーダル（z-index が高い）より下に置く
    -------------------------------------------------------------------------- */
-body:not(.is-mobile)::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: var(--lg-ctrl-reserve);
-  height: var(--lg-top-gap);
-  z-index: 1;
+body.is-frameless.is-hidden-frameless:not(.is-mobile) .titlebar {
   -webkit-app-region: drag;
+  /* 既定は 39px（--header-height - 1）で、下のタブ行にまで重なってしまう。
+     ドラッグ帯と同じ高さに縮める。 */
+  height: var(--lg-top-gap);
+  /* 既定は pointer-events: none（下のタブ行へ操作を譲るため）。帯がタブ行と
+     重ならない今は、普通にヒットテストさせてドラッグ領域を確実にする。 */
+  pointer-events: auto;
 }
 
 /* 通常のフレーム時のみ、タイトルバー自体をガラスにする。
-   隠しフレーム時（Windows/Linux の枠なし）の .titlebar は
-   pointer-events: none の透明なドラッグ領域で、実体はタブ行なので
-   背景を塗ると上のタブ行を覆ってしまう。 */
+   隠しフレーム時（Windows/Linux の枠なし）の .titlebar は、上で上端の帯へ
+   縮めたドラッグ領域なので背景を塗らない（実体はタブ行で、塗ると覆う）。 */
 body:not(.is-hidden-frameless) .titlebar {
-  /* 上端のドラッグ帯より手前に置く（ウィンドウ操作ボタンを覆わない） */
   z-index: var(--layer-cover);
   background-color: var(--lg-chrome-2) !important;
   -webkit-backdrop-filter: var(--lg-backdrop);
@@ -449,9 +442,6 @@ body.is-hidden-frameless:not(.is-mobile) {
     var(--lg-btn-size) * 3 + var(--lg-btn-gap) * 2 + var(--lg-btn-inset) * 2 +
       var(--size-4-2)
   );
-  /* 上端のドラッグ帯の右端をこの幅だけ空けて、ボタンと重ならないようにする
-     （重なると Electron がクリックをドラッグとして吸って押せなくなる）。 */
-  --lg-ctrl-reserve: calc(var(--frame-right-space) + var(--size-4-2));
 }
 
 /* ボタンを並べる箱。上端の帯の中で右寄せにする。既定は「高さ 100% の横長」
