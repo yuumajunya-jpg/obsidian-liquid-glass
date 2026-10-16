@@ -426,7 +426,7 @@ body:not(.is-hidden-frameless) .titlebar {
 body.is-hidden-frameless:not(.is-mobile) {
   /* 丸を収めるために上端に足す帯の高さ（0 で従来どおり --lg-gap のみ）。 */
   --lg-btn-strip: 14px;
-  --lg-btn-size: 12px;
+  --lg-btn-size: 14px;
   --lg-btn-gap: 8px;
   --lg-btn-inset: var(--size-4-1);
   --lg-btn-min: #febc2e;
@@ -453,8 +453,11 @@ body.is-hidden-frameless:not(.is-mobile) .titlebar-button-container.mod-right {
   align-items: center;
   gap: var(--lg-btn-gap);
   /* 既定はウィンドウ操作ボタンの下地に --titlebar-background を敷く。丸だけを
-     浮かせたいので透明にする。 */
-  background-color: transparent;
+     浮かせたいので透明にする。既定側には body.is-focused 付きの
+     「.is-hidden-frameless:not(.is-fullscreen).is-focused ...」もあり、こちらの
+     方が詳細度が高い（(0,5,0)）。ウィンドウがフォーカスされている間そこだけ
+     背景が戻ってしまうため !important で打ち消す。 */
+  background-color: transparent !important;
 }
 
 /* 丸そのもの。既定の横長パディング・大きさを打ち消す。
