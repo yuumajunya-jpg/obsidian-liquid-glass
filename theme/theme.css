@@ -191,6 +191,14 @@ body {
                      0 40px 100px rgba(0, 0, 0, 0.30);
   --lg-cover: rgba(6, 8, 16, 0.45);             /* モーダルの背景幕 */
 
+  /* --- コールアウト（ノート内の小さなガラスカード） ----------------------
+     種類ごとの色（--callout-color）は背景には使わず、共通のすりガラスにする。
+     種類はアイコンと見出しの文字色に残るので、見た目は統一できる。 */
+  --lg-callout: rgba(255, 255, 255, 0.07);
+  /* パネルより内側なので、全体のぼかし（--lg-blur）より弱めにする。 */
+  --lg-callout-backdrop: blur(12px) saturate(160%);
+  --lg-callout-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+
   /* --- 壁紙 --------------------------------------------------------------
      差し替えたいときは --lg-wallpaper を丸ごと上書きしてください。
      画像を使いたいときは --lg-wallpaper-photo に url(...) を入れる。 */
@@ -227,6 +235,11 @@ body.theme-light {
                      0 16px 48px rgba(31, 41, 84, 0.18),
                      0 40px 100px rgba(31, 41, 84, 0.14);
   --lg-cover: rgba(230, 235, 250, 0.45);
+
+  /* コールアウト。ライトでは白いカードにする（--lg-callout-backdrop は上の
+     body の値をそのまま使う）。 */
+  --lg-callout: rgba(255, 255, 255, 0.62);
+  --lg-callout-shadow: 0 6px 18px rgba(31, 41, 84, 0.10);
 
   --lg-wallpaper-base: #eef1f8;
   --lg-wallpaper:
@@ -277,7 +290,6 @@ body.theme-light {
   --background-modifier-form-field: var(--lg-field);
   --shadow-l: var(--lg-float-shadow);
   --callout-radius: var(--radius-m);
-  --callout-border-width: 1px;
   /* ドロップダウンも入力欄と同じガラスの面に揃える
      （既定は --interactive-normal = 不透明）。 */
   --dropdown-background: var(--lg-field);
@@ -436,8 +448,8 @@ body.is-hidden-frameless:not(.is-mobile) {
   --lg-btn-close: #ff5f57;
   --lg-btn-close-rim: #e0443e;
   /* ホバー時に丸の中に出るアイコンの大きさと色。 */
-  --lg-btn-glyph-size: 7px;
-  --lg-btn-glyph: rgba(0, 0, 0, 0.5);
+  --lg-btn-glyph-size: 9px;
+  --lg-btn-glyph: rgb(0, 0, 0);
   /* タブ行がボタン用に空ける幅。既定は Windows の大きなボタン用に 126px あるが、
      丸は小さいので必要な分だけに詰める（そのぶんタブが広く使える）。 */
   --frame-right-space: calc(
@@ -744,11 +756,31 @@ body {
   box-shadow: inset 0 1px 0 var(--lg-rim-top-soft);
 }
 
-/* コールアウトは Obsidian 既定の「種類ごとの色」を活かしたまま、
-   角丸と上辺のハイライトだけを足す（背景は塗り替えない）。 */
+/* コールアウトは、種類ごとの色を背景に使わず「共通のガラスカード」にする。
+   種類の違いはアイコンと見出しの文字色（--callout-color）で分かるので、背景まで
+   色分けせず、無彩色の輪郭＋上辺のハイライト＋薄い影で浮かせる。
+   角丸は --callout-radius（= --radius-m）で既に効いている。 */
 .callout {
   corner-shape: var(--corner-shape);
-  box-shadow: inset 0 1px 0 var(--lg-rim-top-soft);
+  /* 既定は種類の色を薄く敷く（rgba(var(--callout-color), 0.1)）。共通のガラスに。 */
+  background-color: var(--lg-callout) !important;
+  -webkit-backdrop-filter: var(--lg-callout-backdrop);
+  backdrop-filter: var(--lg-callout-backdrop);
+  /* 既定の枠は種類の色（border-width は 0）なので、無彩色の輪郭に置き換える。 */
+  border: 1px solid var(--lg-rim-outline);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    var(--lg-callout-shadow);
+  /* 既定の mix-blend-mode はダーク=lighten / ライト=darken。
+     白い背景とはどちらも相性が悪く、特にライトの darken では白が完全に無効化されて
+     カードが素通しになる（darken(背景, 白) = 背景）。ダーク側は「背景より明るい面」が
+     lighten でも normal でも同じ結果なので、normal にしても見た目は変わらない。
+     文字もブレンドされなくなるぶん読みやすくなる。 */
+  mix-blend-mode: normal;
+}
+/* 見出し部分は内側の角丸に合わせる（折りたたみ時に角がはみ出さないように）。 */
+.callout-title {
+  border-radius: calc(var(--radius-m) - 6px);
 }
 
 .markdown-preview-view blockquote,
