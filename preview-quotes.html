@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>引用ブロックのバリエーション — Liquid Glass</title>
+<link rel="stylesheet" href="obsidian-default.css">
+<link rel="stylesheet" href="theme/theme.css">
+<style>
+  /* mock-only。ここに書いたのは「案」であって、まだ theme.css には入っていません。
+     どの案もテーマのトークン（--lg-* / --color-accent / --radius-*）だけで作っています。 */
+  html { zoom: 0.618; }
+  html, body { height: 100%; }
+  .workspace-split { height: 100%; }
+  .workspace-split.mod-root { flex: 1 1 auto !important; width: auto !important; min-width: 0; }
+  .markdown-preview-view { --file-line-width: 46em; }
+
+  /* 案を見比べやすいように、各案の中の引用は「面・枠・影・余白」を毎回まっさらにしてから作る */
+  .variant blockquote {
+    background-color: transparent;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: var(--size-4-2) var(--size-4-4);
+    margin-inline: 0;
+    margin-block: 1.2em;
+  }
+  .variant > .label {
+    font-family: var(--font-monospace);
+    font-size: var(--font-ui-smaller);
+    color: var(--text-faint);
+    margin: 2.4em 0 -0.6em;
+  }
+  /* 入れ子の引用は、どの案でも「細い線だけ」に落とす（面が二重にならないように） */
+  .variant blockquote blockquote {
+    border: 0;
+    background: none;
+    box-shadow: none;
+    padding-inline-start: var(--size-4-4);
+    border-inline-start: 1px solid var(--lg-rim-outline);
+  }
+
+  /* ── V1 スパイン（背表紙）──────────────────────────────────────────
+     ガラスの面の左端に、アクセント色の「背表紙」を1本。下に向かって薄く消える。 */
+  .v1 blockquote {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--lg-callout);
+    border: 1px solid var(--lg-rim-outline);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow: inset 0 1px 0 var(--lg-rim-top), var(--lg-callout-shadow);
+  }
+  .v1 blockquote::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 3px;
+    background: linear-gradient(
+      to bottom,
+      var(--color-accent),
+      color-mix(in srgb, var(--color-accent) 30%, transparent)
+    );
+  }
+
+  /* ── V2 色付きガラス ───────────────────────────────────────────────
+     面全体をアクセント色でほんのり染める。硬い縦線は無し。コールアウトと同じ考え方。 */
+  .v2 blockquote {
+    background-color: var(--lg-frost);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-accent) 14%, transparent),
+      color-mix(in srgb, var(--color-accent) 7%, transparent)
+    );
+    border: 1px solid var(--lg-rim-outline);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow: inset 0 1px 0 var(--lg-rim-top-soft), var(--lg-callout-shadow);
+  }
+
+  /* ── V3 引用符の透かし（V2 + “ ）─────────────────────────────────
+     左上に大きな引用符を薄く置く。字面が少し下がるので、その分だけ左を広げる。 */
+  .v3 blockquote {
+    position: relative;
+    background-color: var(--lg-frost);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-accent) 14%, transparent),
+      color-mix(in srgb, var(--color-accent) 7%, transparent)
+    );
+    border: 1px solid var(--lg-rim-outline);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow: inset 0 1px 0 var(--lg-rim-top-soft), var(--lg-callout-shadow);
+    padding-inline-start: calc(var(--size-4-4) + 1.4em);
+  }
+  .v3 blockquote::before {
+    content: "\201C";
+    position: absolute;
+    inset-inline-start: 0.55em;
+    top: 0.02em;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.6em;
+    line-height: 1;
+    color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+    pointer-events: none;
+  }
+
+  /* ── V4 ミニマル（面を持たない）───────────────────────────────────
+     カードをやめて、細い線だけ。下に向かって消える。文字は少し控えめに。 */
+  .v4 blockquote {
+    position: relative;
+    color: var(--text-muted);
+    padding-block: var(--size-4-1);
+    padding-inline-start: var(--size-4-4);
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .v4 blockquote::before {
+    content: "";
+    position: absolute;
+    inset-block: 0.15em;
+    inset-inline-start: 0;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(
+      to bottom,
+      var(--color-accent),
+      color-mix(in srgb, var(--color-accent) 12%, transparent)
+    );
+  }
+
+  /* ── V5 重ねガラス ────────────────────────────────────────────────
+     奥にもう1枚ガラスを少しずらして置く（::after を z-index:-1 で後ろへ）。 */
+  .v5 blockquote {
+    position: relative;
+    background-color: var(--lg-frost);
+    border: 1px solid var(--lg-rim-outline);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    box-shadow: inset 0 1px 0 var(--lg-rim-top-soft);
+    margin-inline-end: var(--size-4-4);
+  }
+  .v5 blockquote::after {
+    content: "";
+    position: absolute;
+    inset: 7px -7px -7px 7px;
+    z-index: -1;
+    border: 1px solid var(--lg-rim-outline);
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    background-color: var(--lg-frost);
+  }
+
+  /* 見出しの「案」ラベルは本文と混ざらないように小さく */
+  .variant-note { color: var(--text-muted); font-size: var(--font-ui-small); }
+</style>
+</head>
+<body class="theme-dark is-frameless show-ribbon">
+
+<div class="app-container">
+  <div class="horizontal-main-container">
+    <div class="workspace">
+      <div class="workspace-split mod-vertical mod-root">
+        <div class="workspace-tabs mod-top">
+          <div class="workspace-tab-header-container">
+            <div class="workspace-tab-header-container-inner">
+              <div class="workspace-tab-header is-active">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">📝</div>
+                  <div class="workspace-tab-header-inner-title">引用のバリエーション</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-leaf">
+            <div class="workspace-leaf-content" data-type="markdown">
+              <div class="view-content">
+                <div class="markdown-preview-view markdown-rendered">
+
+                  <h1>引用ブロックのバリエーション</h1>
+                  <p class="variant-note">
+                    どれもテーマのトークンだけで作った案です（まだ <code>theme.css</code> には入っていません）。
+                    面・枠・影・余白は各案で作り直しているので、ここでの見た目がそのまま採用後の見た目になります。
+                  </p>
+
+                  <!-- V1 -->
+                  <div class="variant v1">
+                    <p class="label">V1 — スパイン（面 ＋ 左の1本線）</p>
+                    <blockquote>
+                      <p>ガラスの面の左端に、アクセント色の背表紙を1本。下に向かって薄く消えるので、硬い罫線に見えない。</p>
+                      <p>段落が続いても、線は面の高さに合わせて伸びる。</p>
+                      <ul><li>箇条書きもこの中に入る</li><li>2行目</li></ul>
+                    </blockquote>
+                  </div>
+
+                  <!-- V2 -->
+                  <div class="variant v2">
+                    <p class="label">V2 — 色付きガラス（面ごとアクセントで染める）</p>
+                    <blockquote>
+                      <p>硬い縦線は無し。面全体をアクセント色でほんのり染める。コールアウトと同じ考え方なので、ノート全体の統一感が出る。</p>
+                      <p>上から下へ少しずつ薄くなるグラデーションで、ガラスらしい光のムラを出している。</p>
+                      <ul><li>箇条書きもこの中に入る</li><li>2行目</li></ul>
+                    </blockquote>
+                  </div>
+
+                  <!-- V3 -->
+                  <div class="variant v3">
+                    <p class="label">V3 — 引用符の透かし（V2 ＋ “ ）</p>
+                    <blockquote>
+                      <p>左上に大きな引用符を薄く置く。一目で引用だと分かる、editorial な見た目。字面はその分だけ右にずらしてある。</p>
+                      <p>面は V2 と同じなので、色の主張は強くない。</p>
+                    </blockquote>
+                  </div>
+
+                  <!-- V4 -->
+                  <div class="variant v4">
+                    <p class="label">V4 — ミニマル（面を持たない）</p>
+                    <blockquote>
+                      <p>カードをやめて、細い線と控えめな文字色だけ。文章量の多いノートで、引用がうるさくならない。</p>
+                      <p>ただし「全部ガラス」という今のテーマの方向とは、少しずれる。</p>
+                    </blockquote>
+                  </div>
+
+                  <!-- V5 -->
+                  <div class="variant v5">
+                    <p class="label">V5 — 重ねガラス（奥にもう1枚）</p>
+                    <blockquote>
+                      <p>奥にもう1枚ガラスを少しずらして置き、厚みを出す。いちばん「ガラス板」らしいが、一番クセが強い。</p>
+                      <p>入れ子の引用では奥の1枚を消すなど、整理が必要。</p>
+                    </blockquote>
+                  </div>
+
+                  <h2>入れ子と長文の確認（V1 で）</h2>
+                  <div class="variant v1">
+                    <blockquote>
+                      <p>外側の引用。</p>
+                      <blockquote><p>入れ子の引用は、面をやめて細い線だけに落とす（面が二重にならない）。</p></blockquote>
+                      <p>外側に戻る。長い段落が続いても面の高さは自動で伸びるので、線の端が浮くことはない。改行が増えても、パディングは上下そのまま。</p>
+                    </blockquote>
+                  </div>
+
+                  <p class="variant-note">
+                    実際のテーマでは、編集中（ライブプレビュー）の引用も同じ色になるように
+                    <code>--blockquote-background-color</code> / <code>--blockquote-border-*</code> を併せて設定します
+                    （読み込み中の見た目が読み取り表示と食い違わないように）。
+                  </p>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
