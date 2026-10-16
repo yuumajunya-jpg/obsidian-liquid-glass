@@ -192,9 +192,10 @@ body {
   --lg-cover: rgba(6, 8, 16, 0.45);             /* モーダルの背景幕 */
 
   /* --- コールアウト（ノート内の小さなガラスカード） ----------------------
-     種類ごとの色（--callout-color）は背景には使わず、共通のすりガラスにする。
-     種類はアイコンと見出しの文字色に残るので、見た目は統一できる。 */
+     ガラスの面（--lg-callout）の上に、種類ごとの色（--callout-color）を
+     上澄みとして薄く重ねる。色は残しつつ、透けとぼかしでガラス感を保つ。 */
   --lg-callout: rgba(255, 255, 255, 0.07);
+  --lg-callout-tint: 0.14;   /* 種類の色の混ぜ具合（0 で無色のガラス） */
   /* パネルより内側なので、全体のぼかし（--lg-blur）より弱めにする。 */
   --lg-callout-backdrop: blur(12px) saturate(160%);
   --lg-callout-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
@@ -756,25 +757,32 @@ body {
   box-shadow: inset 0 1px 0 var(--lg-rim-top-soft);
 }
 
-/* コールアウトは、種類ごとの色を背景に使わず「共通のガラスカード」にする。
-   種類の違いはアイコンと見出しの文字色（--callout-color）で分かるので、背景まで
-   色分けせず、無彩色の輪郭＋上辺のハイライト＋薄い影で浮かせる。
+/* コールアウトは「種類ごとの色を残したガラスカード」にする。
+   ガラスの面（--lg-callout）の上に、種類の色（--callout-color）を上澄みとして薄く
+   重ねるので、種類の見分け（色）と、透け・ぼかし・輪郭によるガラス感が両立する。
    角丸は --callout-radius（= --radius-m）で既に効いている。 */
 .callout {
   corner-shape: var(--corner-shape);
-  /* 既定は種類の色を薄く敷く（rgba(var(--callout-color), 0.1)）。共通のガラスに。 */
+  /* ガラスの下地。既定は種類の色を不透明寄りに敷く（rgba(..., 0.1)）ので置き換える。 */
   background-color: var(--lg-callout) !important;
+  /* その上に種類の色を薄く重ねる（上澄み）。濃さは --lg-callout-tint。
+     背景画像は既定で none、他のどこからも指定されないのでここで入れて問題ない。 */
+  background-image: linear-gradient(
+    rgba(var(--callout-color), var(--lg-callout-tint)),
+    rgba(var(--callout-color), var(--lg-callout-tint))
+  ) !important;
   -webkit-backdrop-filter: var(--lg-callout-backdrop);
   backdrop-filter: var(--lg-callout-backdrop);
-  /* 既定の枠は種類の色（border-width は 0）なので、無彩色の輪郭に置き換える。 */
+  /* 既定の枠は種類の色（border-width は 0）なので、無彩色の輪郭に置き換える。
+     縁を光らせておくと、色が乗っていても「ガラス」に見える。 */
   border: 1px solid var(--lg-rim-outline);
   box-shadow:
     inset 0 1px 0 var(--lg-rim-top),
     var(--lg-callout-shadow);
   /* 既定の mix-blend-mode はダーク=lighten / ライト=darken。
-     白い背景とはどちらも相性が悪く、特にライトの darken では白が完全に無効化されて
-     カードが素通しになる（darken(背景, 白) = 背景）。ダーク側は「背景より明るい面」が
-     lighten でも normal でも同じ結果なので、normal にしても見た目は変わらない。
+     ライトの darken では明るい面が無効化されて（darken(背景, 明るい色) = 背景）
+     塗りも上澄みも消えてしまう。ダーク側は「背景より明るい面」が lighten でも
+     normal でも同じ結果なので、normal にしても見た目は変わらない。
      文字もブレンドされなくなるぶん読みやすくなる。 */
   mix-blend-mode: normal;
 }
