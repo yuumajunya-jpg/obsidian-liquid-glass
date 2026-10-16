@@ -55,7 +55,7 @@ Obsidian デフォルトテーマの上に「ガラスの面」だけを上書�
 | パネル同士のすき間 | `--lg-gap` | `10px` |
 | サイドバー等の透過度 | `--lg-chrome-alpha` | `0.44` |
 | 本文・ダイアログの透過度 | `--lg-surface-alpha` | `0.62` |
-| 角丸の大きさ | `--lg-radius-scale` | `0.85` |
+| 角丸の大きさ | `--lg-radius-scale` | `1` |
 | 角のカーブ | `--corner-shape` | `squircle` |
 | 壁紙をオフにする | クラス `lg-no-wallpaper` | オフ |
 | 壁紙に画像を使う | `--lg-wallpaper-photo` | `none` |

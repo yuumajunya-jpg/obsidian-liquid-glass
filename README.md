@@ -82,8 +82,8 @@ Obsidian のデフォルトテーマを iOS 26 の **Liquid Glass**（すりガ�
   **すき間を空けたフローティングのガラスパネル**に
   - `backdrop-filter: blur(24px) saturate(180%) brightness(1.06)`
   - 上辺のスペキュラハイライト（`inset 0 1px 0`）+ 1px 輪郭 + 多層シャドウ
-- 角丸は `--lg-radius-scale` で一括調整（既定 `0.85`。最大の `--radius-xl` は 22px 相当）。
-  `--corner-shape: squircle` で Apple 風の曲線に（未対応エンジンでは通常の円弧 `round` になる）
+- 角丸を全体的に拡大（最大 26px）。`--corner-shape: squircle` で Apple 風の曲線に
+  （未対応エンジンでは通常の円弧 `round` になる）
 - タブをピル型に変更（既定の「くっつくタブ」装飾の疑似要素を無効化）
 - モーダル / コマンドパレット / メニュー / サジェストを濃いめのガラスに
 - ファイルツリー選択項目、iOS 風トグル、コードブロック、引用、コールアウトもガラス化
