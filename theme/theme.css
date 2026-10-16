@@ -66,7 +66,7 @@ settings:
         title: 角丸の大きさ
         description: 1 が基準。0.4 で控えめ、1.8 でかなり丸くなります。
         type: variable-number-slider
-        default: 1
+        default: 0.85
         min: 0.4
         max: 1.8
         step: 0.05
@@ -102,7 +102,7 @@ settings:
         default: none
 */
 
-/* rev 2026-10-17d — 引用＝ガラスカード＋背表紙 ／ コールアウト＝種類色を color-mix で重ねる
+/* rev 2026-10-17e — 角丸を一括で少し鋭く（--lg-radius-scale: 0.85）／ コールアウトの色味を調整
    コピーが最新かどうかは、この rev 行で確認できます。 */
 
 /* ==========================================================================
@@ -142,8 +142,10 @@ settings:
 body {
   /* --- 角丸 ---------------------------------------------------------------
      Obsidian 自身の --radius-* を置き換える。アプリ内のほぼ全ての角丸が
-     ここから決まる。s は小さめ（チェックボックス等）に保つこと。 */
-  --lg-radius-scale: 1;
+     ここから決まる。s は小さめ（チェックボックス等）に保つこと。
+     1 が基準で、0.85 は「少しだけ鋭く」。小さくしすぎると s（8px→）が
+     ほぼ直角になるので、0.6 あたりが下限の目安。 */
+  --lg-radius-scale: 0.85;
   --radius-s: calc(8px * var(--lg-radius-scale));
   --radius-m: calc(14px * var(--lg-radius-scale));
   --radius-l: calc(20px * var(--lg-radius-scale));
@@ -876,7 +878,8 @@ body {
 .cm-active-line,
 .cm-activeLine {
   background-color: var(--lg-hover) !important;
-  border-radius: 6px;
+  /* ここだけ固定値だったので、角丸のスケールに乗せる。 */
+  border-radius: calc(6px * var(--lg-radius-scale));
 }
 
 /* ==========================================================================
