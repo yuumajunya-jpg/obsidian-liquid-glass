@@ -149,7 +149,7 @@ body { --lg-quote: rgba(255, 255, 255, 0.12); }
   リサイズを妨げません。`--lg-gap` を 0 にすると帯は消え、既定のタブバー移動だけになります。
 - **コールアウト**：「種類ごとの色を薄く敷いた箱」だったのを、**色を残したガラスカード**に
   しています。ガラスの下地（`--lg-callout`）の上に、種類の色（`--callout-color`）を上澄み
-  として薄く重ねる（`--lg-callout-tint`、既定 0.14、`0` で無色のガラス）ので、種類の
+  として薄く重ねる（`--lg-callout-tint`、既定 0.03、`0` で無色のガラス）ので、種類の
   見分けとガラス感が両立します。上澄みは `background-image` の `linear-gradient` ＋
   `color-mix(in srgb, var(--callout-color) calc(var(--lg-callout-tint) * 100%), transparent)`
   で作っています（新しい Obsidian では `--callout-color` が `#027aff` のような色そのものに
