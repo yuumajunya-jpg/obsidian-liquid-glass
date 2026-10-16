@@ -102,7 +102,7 @@ settings:
         default: none
 */
 
-/* rev 2026-10-17c — コールアウト：種類色を color-mix で薄く重ねる版（新しい --callout-color 形式向け）
+/* rev 2026-10-17d — 引用＝ガラスカード＋背表紙 ／ コールアウト＝種類色を color-mix で重ねる
    コピーが最新かどうかは、この rev 行で確認できます。 */
 
 /* ==========================================================================
@@ -178,7 +178,6 @@ body {
   --lg-hover: rgba(255, 255, 255, 0.08);
   --lg-selected: rgba(255, 255, 255, 0.16);
   --lg-tab-active: rgba(255, 255, 255, 0.14);
-  --lg-frost: rgba(255, 255, 255, 0.05);   /* 引用など、ごく薄い霜面 */
   --lg-field: rgba(255, 255, 255, 0.08);   /* 入力欄・インラインコード */
   --lg-well: rgba(0, 0, 0, 0.26);          /* コードブロック等の凹んだ面 */
 
@@ -203,6 +202,10 @@ body {
   --lg-callout-backdrop: blur(12px) saturate(160%);
   --lg-callout-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
 
+  /* --- 引用（ノート内のガラスカード） ------------------------------------
+     面はコールアウトと同じ濃さ。左端にアクセント色の「背表紙」を1本入れる。 */
+  --lg-quote: rgba(255, 255, 255, 0.07);
+
   /* --- 壁紙 --------------------------------------------------------------
      差し替えたいときは --lg-wallpaper を丸ごと上書きしてください。
      画像を使いたいときは --lg-wallpaper-photo に url(...) を入れる。 */
@@ -224,7 +227,6 @@ body.theme-light {
   --lg-hover: rgba(255, 255, 255, 0.58);
   --lg-selected: rgba(255, 255, 255, 0.86);
   --lg-tab-active: rgba(255, 255, 255, 0.74);
-  --lg-frost: rgba(48, 58, 92, 0.05);
   --lg-field: rgba(255, 255, 255, 0.72);
   --lg-well: rgba(48, 58, 92, 0.07);
 
@@ -244,6 +246,7 @@ body.theme-light {
      body の値をそのまま使う）。 */
   --lg-callout: rgba(255, 255, 255, 0.62);
   --lg-callout-shadow: 0 6px 18px rgba(31, 41, 84, 0.10);
+  --lg-quote: rgba(255, 255, 255, 0.60);
 
   --lg-wallpaper-base: #eef1f8;
   --lg-wallpaper:
@@ -298,6 +301,14 @@ body.theme-light {
      （既定は --interactive-normal = 不透明）。 */
   --dropdown-background: var(--lg-field);
   --dropdown-background-hover: var(--lg-hover);
+
+  /* 引用。編集中（ライブプレビュー）は行ごとの疑似要素で描かれるため、
+     角丸のカードや下に向かって消える線にはできない。そこで「面の色」と
+     「線の色・太さ」だけをここで揃え、読み取り表示では同じ色の上に
+     角丸・ハイライト・影を足す（下の blockquote のルール）。 */
+  --blockquote-background-color: var(--lg-quote);
+  --blockquote-border-thickness: 3px;
+  --blockquote-border-color: var(--color-accent);
 }
 
 /* ==========================================================================
@@ -798,15 +809,59 @@ body {
   border-radius: calc(var(--radius-m) - 6px);
 }
 
+/* 引用は「ガラスのカード＋左端の背表紙」にする。
+   背表紙はアクセント色で、下に向かって薄く消える（硬い罫線に見えないように）。
+   線は ::before を「カードと同じ形・同じ角丸」で敷き、そのうえに
+   ・横方向のグラデーションで左端 3px だけを塗る
+   ・縦方向のマスクで下に向かって薄くする
+   という2段構えで作る。カード側を overflow: hidden で切る必要がないので、
+   引用の中に横長の表や画像があっても欠けない。
+   入れ子の引用は面をやめて細い線だけにする（カードが二重にならないように）。 */
 .markdown-preview-view blockquote,
 .markdown-rendered blockquote {
+  position: relative;
+  background-color: var(--lg-quote);
   border: 1px solid var(--lg-rim-outline);
-  border-inline-start: 3px solid var(--color-accent);
   border-radius: var(--radius-m);
   corner-shape: var(--corner-shape);
-  background-color: var(--lg-frost);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    var(--lg-callout-shadow);
   padding: var(--size-4-2) var(--size-4-4);
   margin-inline-start: 0;
+}
+.markdown-preview-view blockquote::before,
+.markdown-rendered blockquote::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: var(--radius-m);
+  corner-shape: var(--corner-shape);
+  /* 左端 3px だけアクセント色、残りは透明。 */
+  background-image: linear-gradient(
+    to right,
+    var(--color-accent) 0,
+    color-mix(in srgb, var(--color-accent) 80%, transparent) 3px,
+    transparent 3px
+  );
+  /* 下に向かって薄く消す（このマスクは背表紙だけに効き、本文には影響しない）。 */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.25) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.25) 100%);
+}
+.markdown-preview-view blockquote blockquote,
+.markdown-rendered blockquote blockquote {
+  background-color: transparent;
+  border: 0;
+  border-inline-start: 1px solid var(--lg-rim-outline);
+  border-radius: 0;
+  box-shadow: none;
+  padding: var(--size-4-1) 0 var(--size-4-1) var(--size-4-4);
+  margin-block: var(--size-4-2);
+}
+.markdown-preview-view blockquote blockquote::before,
+.markdown-rendered blockquote blockquote::before {
+  content: none;
 }
 
 /* テーブルは Obsidian 既定のまま（罫線の太さ・色は触らない）。

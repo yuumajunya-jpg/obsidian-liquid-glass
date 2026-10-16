@@ -21,6 +21,7 @@ Obsidian のデフォルトテーマを iOS 26 の **Liquid Glass**（すりガ�
 | `liquid-glass.css` | **旧試作（レガシー）**。`theme/theme.css` に置き換わった。参照用に残置 | 約20KB |
 | `preview.html` | 確認用モック。メイン画面（リボン / サイドバー / エディタ / タブ / ステータスバー）。`theme/theme.css` を読み込む。新形式の Obsidian に合わせて `--callout-*` を色として定義している | 約12KB |
 | `preview-overlays.html` | 確認用モック。オーバーレイ系（モーダル / コマンドパレット / メニュー / トグル / 引用 / コールアウト）。`theme/theme.css` を読み込む | 約7KB |
+| `preview-quotes.html` | 確認用モック。引用ブロックの案の比較（V1 スパイン＝採用 〜 V5 重ねガラス）。テーマのトークンだけで各案を作っている | 約13KB |
 | `serve.js` | プレビュー用の簡易ローカルHTTPサーバ（ポート 8787）。`file://` を開けないツール向け | 約1KB |
 | `README.md` | このファイル | — |
 

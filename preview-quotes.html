@@ -14,7 +14,7 @@
   .workspace-split.mod-root { flex: 1 1 auto !important; width: auto !important; min-width: 0; }
   .markdown-preview-view { --file-line-width: 46em; }
 
-  /* 案を見比べやすいように、各案の中の引用は「面・枠・影・余白」を毎回まっさらにしてから作る */
+  /* 案を見比べやすいように、各案の中の引用は「面・枠・影・余白・線」を毎回まっさらにしてから作る */
   .variant blockquote {
     background-color: transparent;
     background-image: none;
@@ -24,6 +24,10 @@
     padding: var(--size-4-2) var(--size-4-4);
     margin-inline: 0;
     margin-block: 1.2em;
+  }
+  /* テーマ側の背表紙（::before）も消しておく（各案の ::before は、これより後ろにあるので勝つ）。 */
+  .variant blockquote::before {
+    content: none;
   }
   .variant > .label {
     font-family: var(--font-monospace);
@@ -40,12 +44,12 @@
     border-inline-start: 1px solid var(--lg-rim-outline);
   }
 
-  /* ── V1 スパイン（背表紙）──────────────────────────────────────────
-     ガラスの面の左端に、アクセント色の「背表紙」を1本。下に向かって薄く消える。 */
+  /* ── V1 スパイン（背表紙）＝採用 ─────────────────────────────────
+     ガラスの面の左端に、アクセント色の「背表紙」を1本。下に向かって薄く消える。
+     背表紙は面と同じ角丸の ::before に、横グラデ（左3pxだけ着色）＋縦マスクで作る。 */
   .v1 blockquote {
     position: relative;
-    overflow: hidden;
-    background-color: var(--lg-callout);
+    background-color: var(--lg-quote);
     border: 1px solid var(--lg-rim-outline);
     border-radius: var(--radius-m);
     corner-shape: var(--corner-shape);
@@ -54,20 +58,24 @@
   .v1 blockquote::before {
     content: "";
     position: absolute;
-    inset-block: 0;
-    inset-inline-start: 0;
-    width: 3px;
-    background: linear-gradient(
-      to bottom,
-      var(--color-accent),
-      color-mix(in srgb, var(--color-accent) 30%, transparent)
+    inset: 0;
+    pointer-events: none;
+    border-radius: var(--radius-m);
+    corner-shape: var(--corner-shape);
+    background-image: linear-gradient(
+      to right,
+      var(--color-accent) 0,
+      color-mix(in srgb, var(--color-accent) 80%, transparent) 3px,
+      transparent 3px
     );
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.25) 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.25) 100%);
   }
 
   /* ── V2 色付きガラス ───────────────────────────────────────────────
      面全体をアクセント色でほんのり染める。硬い縦線は無し。コールアウトと同じ考え方。 */
   .v2 blockquote {
-    background-color: var(--lg-frost);
+    background-color: var(--lg-quote);
     background-image: linear-gradient(
       to bottom,
       color-mix(in srgb, var(--color-accent) 14%, transparent),
@@ -83,7 +91,7 @@
      左上に大きな引用符を薄く置く。字面が少し下がるので、その分だけ左を広げる。 */
   .v3 blockquote {
     position: relative;
-    background-color: var(--lg-frost);
+    background-color: var(--lg-quote);
     background-image: linear-gradient(
       to bottom,
       color-mix(in srgb, var(--color-accent) 14%, transparent),
@@ -105,6 +113,10 @@
     line-height: 1;
     color: color-mix(in srgb, var(--color-accent) 50%, transparent);
     pointer-events: none;
+    /* テーマ側の背表紙（背景グラデ＋縦マスク）は使わない */
+    background-image: none;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   /* ── V4 ミニマル（面を持たない）───────────────────────────────────
@@ -130,13 +142,16 @@
       var(--color-accent),
       color-mix(in srgb, var(--color-accent) 12%, transparent)
     );
+    /* テーマ側の縦マスクは使わない（この案は自前のグラデーションで消す） */
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   /* ── V5 重ねガラス ────────────────────────────────────────────────
      奥にもう1枚ガラスを少しずらして置く（::after を z-index:-1 で後ろへ）。 */
   .v5 blockquote {
     position: relative;
-    background-color: var(--lg-frost);
+    background-color: var(--lg-quote);
     border: 1px solid var(--lg-rim-outline);
     border-radius: var(--radius-m);
     corner-shape: var(--corner-shape);
@@ -151,7 +166,7 @@
     border: 1px solid var(--lg-rim-outline);
     border-radius: var(--radius-m);
     corner-shape: var(--corner-shape);
-    background-color: var(--lg-frost);
+    background-color: var(--lg-quote);
   }
 
   /* 見出しの「案」ラベルは本文と混ざらないように小さく */
@@ -241,6 +256,27 @@
                       <p>外側に戻る。長い段落が続いても面の高さは自動で伸びるので、線の端が浮くことはない。改行が増えても、パディングは上下そのまま。</p>
                     </blockquote>
                   </div>
+
+                  <h2>テーマの実装そのまま（V1 採用後）</h2>
+                  <p class="variant-note">
+                    ここは <code>.variant</code> で包んでいないので、<code>theme.css</code> に書いた
+                    ルールがそのまま効きます（＝コピー後の Obsidian と同じ見た目）。
+                  </p>
+                  <blockquote>
+                    <p>ガラスのカード＋左端の背表紙。線はカードの角丸に沿って切れ、下に向かって薄くなる。</p>
+                    <p>段落が続いても背表紙は面の高さいっぱいに伸びる。</p>
+                    <blockquote><p>入れ子の引用は面をやめて細い線だけになる（カードが二重にならない）。</p></blockquote>
+                  </blockquote>
+                  <blockquote>
+                    <p>カード側を <code>overflow: hidden</code> で切っていないので、横に長い表もこの通り欠けない。</p>
+                    <table>
+                      <thead><tr><th>案</th><th>面</th><th>線</th><th>角丸</th><th>編集中</th><th>欠け</th><th>クセ</th></tr></thead>
+                      <tbody>
+                        <tr><td>V1</td><td>あり</td><td>背表紙</td><td>あり</td><td>色のみ</td><td>なし</td><td>弱い</td></tr>
+                        <tr><td>V2</td><td>あり</td><td>なし</td><td>あり</td><td>色のみ</td><td>なし</td><td>弱い</td></tr>
+                      </tbody>
+                    </table>
+                  </blockquote>
 
                   <p class="variant-note">
                     実際のテーマでは、編集中（ライブプレビュー）の引用も同じ色になるように

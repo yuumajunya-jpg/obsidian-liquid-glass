@@ -85,6 +85,9 @@ body {
   --lg-callout: rgba(255, 255, 255, 0.12);        /* ガラスを明るく */
   --lg-callout-backdrop: blur(20px) saturate(180%);
 }
+
+/* 例: 引用の面の濃さ（背表紙の色は --color-accent に従います） */
+body { --lg-quote: rgba(255, 255, 255, 0.12); }
 ```
 
 #### 壁紙まわり
@@ -157,10 +160,21 @@ body {
   なお既定の `mix-blend-mode`（ダーク=lighten / ライト=darken）はライトの `darken` で
   明るい面が無効化されて塗りも色も消えるため、`normal` に固定しています（ダークは
   lighten と normal が同じ絵になるので見た目は変わりません）。
+- **引用**：**ガラスのカード（`--lg-quote`。既定はコールアウトと同じ濃さ）＋左端の
+  「背表紙」**（アクセント色の1本線。下に向かって薄く消えるので、硬い罫線に見えません）。
+  背表紙は `::before` を**カードと同じ角丸**で敷いたうえに、横方向のグラデーションで
+  左端 3px だけを塗り、縦方向のマスクで下を薄くして作っています。カード側を
+  `overflow: hidden` で切る必要がないので、**引用の中に横長の表や大きな画像があっても
+  欠けません**。入れ子の引用は面をやめて細い線だけにしています（カードが二重にならない
+  ように）。編集中（ライブプレビュー）は行ごとの疑似要素で描かれるため角丸のカードには
+  できませんが、`--blockquote-background-color` / `--blockquote-border-*` を設定して
+  **面の色と線は読み取り表示と揃えて**います（角丸・上辺のハイライト・影は読み取り表示
+  だけ）。
 
 ### 検証方法
 
-スクリーンショットが使えない環境のため、`preview.html` / `preview-overlays.html` を
-ブラウザで開き、`getComputedStyle` / `getBoundingClientRect` の値で確認しています
+スクリーンショットが使えない環境のため、`preview.html` / `preview-overlays.html` /
+`preview-quotes.html`（引用の比較用）をブラウザで開き、`getComputedStyle` /
+`getBoundingClientRect` の値で確認しています
 （パネルの透過・ぼかし、タブのピル化、フォントが既定のままか、ドラッグ領域、
 リサイズハンドルのヒットエリアなど）。
