@@ -147,9 +147,11 @@ body {
 - **コールアウト**：「種類ごとの色を薄く敷いた箱」だったのを、**色を残したガラスカード**に
   しています。ガラスの下地（`--lg-callout`）の上に、種類の色（`--callout-color`）を上澄み
   として薄く重ねる（`--lg-callout-tint`、既定 0.14、`0` で無色のガラス）ので、種類の
-  見分けとガラス感が両立します。上澄みは `background-image` の `linear-gradient` と
-  古典的な `rgba(var(--callout-color), α)` だけで書いています（`color-mix` は環境によっては
-  宣言ごと無効になり、色が消えるため使っていません）。枠は無彩色の輪郭
+  見分けとガラス感が両立します。上澄みは `background-image` の `linear-gradient` ＋
+  `color-mix(in srgb, var(--callout-color) calc(var(--lg-callout-tint) * 100%), transparent)`
+  で作っています（新しい Obsidian では `--callout-color` が `#027aff` のような色そのものに
+  なっていて、既定の `.callout` も同じ書き方をしているため。旧版の「2, 122, 255」形式では
+  この宣言は無効になり、色は乗らずガラスの面だけが残ります）。枠は無彩色の輪郭
   （`--lg-rim-outline`）＋上辺のハイライト、影は `--lg-callout-shadow`。ぼかしはパネルより
   内側なので控えめ（`--lg-callout-backdrop` = `blur(12px) saturate(160%)`）。
   なお既定の `mix-blend-mode`（ダーク=lighten / ライト=darken）はライトの `darken` で

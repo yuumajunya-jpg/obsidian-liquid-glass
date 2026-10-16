@@ -102,7 +102,7 @@ settings:
         default: none
 */
 
-/* rev 2026-10-17b — コールアウト：ガラス＋種類色の上澄み（color-mix 不使用）
+/* rev 2026-10-17c — コールアウト：種類色を color-mix で薄く重ねる版（新しい --callout-color 形式向け）
    コピーが最新かどうかは、この rev 行で確認できます。 */
 
 /* ==========================================================================
@@ -769,11 +769,14 @@ body {
   /* ガラスの下地。 */
   background-color: var(--lg-callout) !important;
   /* その上に種類の色を薄く重ねる（上澄み）。濃さは --lg-callout-tint（0〜1）。
-     color-mix は使わない（環境によっては宣言ごと無効になり、色が消えるため）。
-     ここは古典的な rgba(var(--callout-color), α) だけで書く＝どの環境でも効く。 */
+     新しい Obsidian では --callout-color が「色そのもの」（例 #027aff）なので、
+     color-mix で透明と混ぜて薄くする（既定の .callout も同じ書き方をしている）。
+     注意：無効な宣言は「1つ前の宣言に戻る」のではなく、値ごと none になって消える
+     （invalid at computed-value time）。なので旧版の「2, 122, 255」形式向けの
+     rgba(var(--callout-color), α) を並べても保険にはならない。並べない。 */
   background-image: linear-gradient(
-    rgba(var(--callout-color), var(--lg-callout-tint)),
-    rgba(var(--callout-color), var(--lg-callout-tint))
+    color-mix(in srgb, var(--callout-color) calc(var(--lg-callout-tint) * 100%), transparent),
+    color-mix(in srgb, var(--callout-color) calc(var(--lg-callout-tint) * 100%), transparent)
   ) !important;
   -webkit-backdrop-filter: var(--lg-callout-backdrop);
   backdrop-filter: var(--lg-callout-backdrop);

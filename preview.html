@@ -18,6 +18,36 @@
   .workspace-tabs > .workspace-leaf { flex: 1 1 auto; min-height: 0; }
   .workspace-leaf { min-height: 0; }
   .workspace-leaf-content .view-content { flex: 1 1 auto; min-height: 0; }
+
+  /* ----------------------------------------------------------------------
+     mock-only: emulate the NEWER Obsidian.
+     The bundled obsidian-default.css is an older snapshot: its callout colors
+     are "r, g, b" triplets and it paints callouts with rgba(var(--callout-color), …).
+     Recent Obsidian stores --callout-* as real colors (e.g. #027aff) and mixes them
+     with color-mix(). Mirror that here so the preview matches the real app.
+     ---------------------------------------------------------------------- */
+  body {
+    --callout-bug: rgb(var(--color-red-rgb));
+    --callout-default: rgb(var(--color-blue-rgb));
+    --callout-error: rgb(var(--color-red-rgb));
+    --callout-example: rgb(var(--color-purple-rgb));
+    --callout-fail: rgb(var(--color-red-rgb));
+    --callout-important: rgb(var(--color-cyan-rgb));
+    --callout-info: rgb(var(--color-blue-rgb));
+    --callout-question: rgb(var(--color-orange-rgb));
+    --callout-success: rgb(var(--color-green-rgb));
+    --callout-summary: rgb(var(--color-cyan-rgb));
+    --callout-tip: rgb(var(--color-cyan-rgb));
+    --callout-todo: rgb(var(--color-blue-rgb));
+    --callout-warning: rgb(var(--color-orange-rgb));
+    --callout-quote: rgb(158, 158, 158);
+  }
+  /* the older rules built rgb() out of the triplet; with a real color the
+     equivalent is to use the color directly. */
+  .callout-title,
+  .callout-icon {
+    color: var(--callout-color);
+  }
 </style>
 </head>
 <body class="theme-dark is-frameless show-view-header show-ribbon">
@@ -139,6 +169,22 @@
                   <div class="callout" data-callout="note">
                     <div class="callout-title"><div class="callout-title-inner">Note</div></div>
                     <div class="callout-content"><p>サイドバーは強めに透過、本文は読みやすさ優先で少し濃く。</p></div>
+                  </div>
+                  <div class="callout" data-callout="tip">
+                    <div class="callout-title"><div class="callout-title-inner">Tip</div></div>
+                    <div class="callout-content"><p>種類ごとの色は、ガラスの面の上に薄く重ねる（--lg-callout-tint）。</p></div>
+                  </div>
+                  <div class="callout" data-callout="warning">
+                    <div class="callout-title"><div class="callout-title-inner">Warning</div></div>
+                    <div class="callout-content"><p>色を濃くしすぎるとガラス感が消える。0.1〜0.2 あたりが目安。</p></div>
+                  </div>
+                  <div class="callout" data-callout="success">
+                    <div class="callout-title"><div class="callout-title-inner">Success</div></div>
+                    <div class="callout-content"><p>種類の見分けとガラス感の両立。</p></div>
+                  </div>
+                  <div class="callout" data-callout="quote">
+                    <div class="callout-title"><div class="callout-title-inner">Quote</div></div>
+                    <div class="callout-content"><p>無彩色の種類もある。</p></div>
                   </div>
                   <h2>コード</h2>
                   <pre><code>body {

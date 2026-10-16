@@ -12,14 +12,14 @@ Obsidian のデフォルトテーマを iOS 26 の **Liquid Glass**（すりガ�
 
 | ファイル | 役割 | サイズ目安 |
 |---|---|---|
-| `theme/theme.css` | **テーマ本体（現行）**。デフォルトテーマに重ねる上書きだけを 1 枚にまとめたもの | 約24KB |
+| `theme/theme.css` | **テーマ本体（現行）**。デフォルトテーマに重ねる上書きだけを 1 枚にまとめたもの | 約46KB |
 | `theme/manifest.json` | テーマ名・バージョン・最低対応バージョン | 約0.2KB |
 | `theme/versions.json` | バージョンと最低対応 Obsidian の対応表 | — |
 | `theme/README.md` | テーマのインストール / カスタマイズ / 設計メモ | — |
 | `app.css` | Obsidian 本体から抽出した**元のCSSそのまま**。PDF.js のCSS + Obsidian デフォルトテーマの合成物。加工はしていない | 約586KB |
 | `obsidian-default.css` | `app.css` から **Obsidian デフォルトテーマ部分だけ** を切り出したもの。改修対象の土台 | 約550KB |
 | `liquid-glass.css` | **旧試作（レガシー）**。`theme/theme.css` に置き換わった。参照用に残置 | 約20KB |
-| `preview.html` | 確認用モック。メイン画面（リボン / サイドバー / エディタ / タブ / ステータスバー）。`theme/theme.css` を読み込む | 約9KB |
+| `preview.html` | 確認用モック。メイン画面（リボン / サイドバー / エディタ / タブ / ステータスバー）。`theme/theme.css` を読み込む。新形式の Obsidian に合わせて `--callout-*` を色として定義している | 約12KB |
 | `preview-overlays.html` | 確認用モック。オーバーレイ系（モーダル / コマンドパレット / メニュー / トグル / 引用 / コールアウト）。`theme/theme.css` を読み込む | 約7KB |
 | `serve.js` | プレビュー用の簡易ローカルHTTPサーバ（ポート 8787）。`file://` を開けないツール向け | 約1KB |
 | `README.md` | このファイル | — |
@@ -46,6 +46,29 @@ Obsidian のデフォルトテーマを iOS 26 の **Liquid Glass**（すりガ�
 
 > Obsidian を更新すると `obsidian.asar` の中身も変わるため、`app.css` /
 > `obsidian-default.css` は更新のたびに取り直すのが安全です。
+
+### 注意：バージョン差（コールアウトの色の持ち方）
+
+手元の `app.css` は**抽出した時点のもの**なので、使用中の Obsidian より古いことがあります。
+実機で確認したところ（2026-10-17）、使用中の Obsidian は既に新形式でした。
+
+| | 旧形式（手元の `app.css`） | 新形式（実機） |
+|---|---|---|
+| `--callout-color` | `2, 122, 255`（3つ組） | `#027aff`（色そのもの） |
+| 既定の塗り | `rgba(var(--callout-color), 0.1)` | `color-mix(in oklch, var(--callout-color) 10%, transparent)` |
+| 有効な書き方 | `rgba(var(--callout-color), α)` | `color-mix(in srgb, var(--callout-color) α%, transparent)` |
+
+**両方を並べて保険にはできません。** `var()` を含む宣言が無効な値になった場合
+（invalid at computed-value time）、CSS は「1つ前の宣言に戻る」のではなく
+**そのプロパティの値ごと `none`（初期値）にする**ためです。実測:
+
+| 宣言（2つ目が勝つ） | `--callout-color: #00ff00` | `--callout-color: 0,255,0` |
+|---|---|---|
+| `…linear-gradient(rgba(var(--c), .5), …)` | `none` | `rgba(0,255,0,.5)` |
+| `…linear-gradient(color-mix(in srgb, var(--c) 50%, transparent), …)` | `color(0 1 0 / .5)` | `none` |
+
+なので、色を触るルールを書くときは**実機の形式に合わせて1つだけ**書きます
+（`preview.html` は新形式を再現するよう `--callout-*` を色に置き換えています）。
 
 ---
 
