@@ -102,6 +102,9 @@ settings:
         default: none
 */
 
+/* rev 2026-10-17b — コールアウト：ガラス＋種類色の上澄み（color-mix 不使用）
+   コピーが最新かどうかは、この rev 行で確認できます。 */
+
 /* ==========================================================================
    Liquid Glass — an iOS 26 "Liquid Glass" inspired theme for Obsidian
    --------------------------------------------------------------------------
@@ -195,7 +198,7 @@ body {
      ガラスの面（--lg-callout）の上に、種類ごとの色（--callout-color）を
      上澄みとして薄く重ねる。色は残しつつ、透けとぼかしでガラス感を保つ。 */
   --lg-callout: rgba(255, 255, 255, 0.07);
-  --lg-callout-tint: 0.14;   /* 種類の色の混ぜ具合（0 で無色のガラス） */
+  --lg-callout-tint: 0.14;   /* 種類の色の重ね具合（0 で無色のガラス） */
   /* パネルより内側なので、全体のぼかし（--lg-blur）より弱めにする。 */
   --lg-callout-backdrop: blur(12px) saturate(160%);
   --lg-callout-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
@@ -758,19 +761,19 @@ body {
 }
 
 /* コールアウトは「種類ごとの色を残したガラスカード」にする。
-   種類の色（--callout-color）を、ガラスの面（--lg-callout）に color-mix で混ぜて
-   1枚の半透明の面にする。色は残り、透け・ぼかし・輪郭でガラス感も残る。
+   ガラスの面（--lg-callout）の上に、種類の色（--callout-color）を上澄みとして
+   薄く重ねる。色は残り、透け・ぼかし・輪郭でガラス感も残る。
    角丸は --callout-radius（= --radius-m）で既に効いている。 */
 .callout {
   corner-shape: var(--corner-shape);
-  /* color-mix が使えない環境向けの保険（色だけを薄く敷く）。 */
-  background-color: rgba(var(--callout-color), var(--lg-callout-tint)) !important;
-  /* 本命。--lg-callout-tint（0〜1 の数値）を calc で % に直して混ぜる。
-     background-image を使わないので、既定側に背景画像を握られていても効く。 */
-  background-color: color-mix(
-    in srgb,
-    rgb(var(--callout-color)) calc(var(--lg-callout-tint) * 100%),
-    var(--lg-callout)
+  /* ガラスの下地。 */
+  background-color: var(--lg-callout) !important;
+  /* その上に種類の色を薄く重ねる（上澄み）。濃さは --lg-callout-tint（0〜1）。
+     color-mix は使わない（環境によっては宣言ごと無効になり、色が消えるため）。
+     ここは古典的な rgba(var(--callout-color), α) だけで書く＝どの環境でも効く。 */
+  background-image: linear-gradient(
+    rgba(var(--callout-color), var(--lg-callout-tint)),
+    rgba(var(--callout-color), var(--lg-callout-tint))
   ) !important;
   -webkit-backdrop-filter: var(--lg-callout-backdrop);
   backdrop-filter: var(--lg-callout-backdrop);

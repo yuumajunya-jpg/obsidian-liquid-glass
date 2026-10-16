@@ -141,12 +141,13 @@ body {
   吸われる問題が起きず、帯のどこでも移動できてボタンも押せる）。左・下辺はドラッグにせず、
   リサイズを妨げません。`--lg-gap` を 0 にすると帯は消え、既定のタブバー移動だけになります。
 - **コールアウト**：「種類ごとの色を薄く敷いた箱」だったのを、**色を残したガラスカード**に
-  しています。種類の色（`--callout-color`）を、ガラスの面（`--lg-callout`）に `color-mix` で
-  混ぜて1枚の半透明の面にしています（混ぜる割合が `--lg-callout-tint`、既定 0.14、
-  `0` で無色のガラス）。`background-image` は使わないので、既定側に背景画像を握られても
-  影響を受けません。枠は無彩色の輪郭（`--lg-rim-outline`）＋上辺のハイライト、影は
-  `--lg-callout-shadow`。ぼかしはパネルより内側なので控えめ（`--lg-callout-backdrop` =
-  `blur(12px) saturate(160%)`）。
+  しています。ガラスの下地（`--lg-callout`）の上に、種類の色（`--callout-color`）を上澄み
+  として薄く重ねる（`--lg-callout-tint`、既定 0.14、`0` で無色のガラス）ので、種類の
+  見分けとガラス感が両立します。上澄みは `background-image` の `linear-gradient` と
+  古典的な `rgba(var(--callout-color), α)` だけで書いています（`color-mix` は環境によっては
+  宣言ごと無効になり、色が消えるため使っていません）。枠は無彩色の輪郭
+  （`--lg-rim-outline`）＋上辺のハイライト、影は `--lg-callout-shadow`。ぼかしはパネルより
+  内側なので控えめ（`--lg-callout-backdrop` = `blur(12px) saturate(160%)`）。
   なお既定の `mix-blend-mode`（ダーク=lighten / ライト=darken）はライトの `darken` で
   明るい面が無効化されて塗りも色も消えるため、`normal` に固定しています（ダークは
   lighten と normal が同じ絵になるので見た目は変わりません）。
