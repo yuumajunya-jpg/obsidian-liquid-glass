@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Obsidian Liquid Glass — Preview</title>
+<link rel="stylesheet" href="obsidian-default.css">
+<link rel="stylesheet" href="theme/theme.css">
+<style>
+  /* mock-only helpers (not part of the theme).
+     Real Obsidian sets sidebar widths inline; we emulate that here. */
+  html { zoom: 0.618; }              /* fit a 1440px-wide layout into the preview pane */
+  html, body { height: 100%; }
+  .workspace-split { height: 100%; }
+  .workspace-split.mod-left-split { width: 264px; flex: 0 0 264px !important; }
+  .workspace-split.mod-right-split { width: 300px; flex: 0 0 300px !important; }
+  .workspace-split.mod-root { flex: 1 1 auto !important; width: auto !important; min-width: 0; }
+  .workspace-split > .workspace-tabs { flex: 1 1 auto; }
+  .workspace-tabs > .workspace-leaf { flex: 1 1 auto; min-height: 0; }
+  .workspace-leaf { min-height: 0; }
+  .workspace-leaf-content .view-content { flex: 1 1 auto; min-height: 0; }
+</style>
+</head>
+<body class="theme-dark is-frameless show-view-header show-ribbon">
+
+<div class="app-container">
+  <div class="titlebar">
+    <div class="titlebar-inner">
+      <div class="titlebar-button-container mod-left">
+        <div class="titlebar-button"><span>My vault</span></div>
+      </div>
+      <div class="titlebar-text">Liquid Glass — My vault</div>
+    </div>
+  </div>
+
+  <div class="horizontal-main-container">
+    <div class="workspace">
+      <!-- Ribbon -->
+      <div class="workspace-ribbon mod-left">
+        <div class="side-dock-actions">
+          <div class="clickable-icon side-dock-ribbon-action" aria-label="Files">🗂</div>
+          <div class="clickable-icon side-dock-ribbon-action" aria-label="Search">🔍</div>
+          <div class="clickable-icon side-dock-ribbon-action" aria-label="Graph">🕸</div>
+          <div class="clickable-icon side-dock-ribbon-action" aria-label="Canvas">🎨</div>
+        </div>
+        <div class="side-dock-settings">
+          <div class="clickable-icon side-dock-ribbon-action" aria-label="Settings">⚙️</div>
+        </div>
+      </div>
+
+      <!-- Left sidebar -->
+      <div class="workspace-split mod-vertical mod-left-split">
+        <div class="workspace-tabs mod-top">
+          <div class="workspace-tab-header-container">
+            <div class="workspace-tab-header-container-inner">
+              <div class="workspace-tab-header is-active">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">🗂</div>
+                  <div class="workspace-tab-header-inner-title">Files</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-leaf">
+            <div class="workspace-leaf-content" data-type="file-explorer">
+              <div class="view-content">
+                <div class="nav-files-container">
+                  <div class="nav-folder">
+                    <div class="tree-item-self nav-folder-title is-clickable">
+                      <div class="tree-item-inner nav-folder-title-content">📁 Notes</div>
+                    </div>
+                    <div class="tree-item-children nav-folder-children">
+                      <div class="tree-item-self nav-file-title is-clickable is-active">
+                        <div class="tree-item-inner nav-file-title-content">Liquid Glass 設計メモ</div>
+                      </div>
+                      <div class="tree-item-self nav-file-title is-clickable">
+                        <div class="tree-item-inner nav-file-title-content">iOS 26 デザイントークン</div>
+                      </div>
+                      <div class="tree-item-self nav-file-title is-clickable">
+                        <div class="tree-item-inner nav-file-title-content">Obsidian 変数メモ</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tree-item-self nav-file-title is-clickable">
+                    <div class="tree-item-inner nav-file-title-content">Daily/2026-10-16</div>
+                  </div>
+                  <div class="tree-item-self nav-file-title is-clickable">
+                    <div class="tree-item-inner nav-file-title-content">Inbox</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Root / editor -->
+      <div class="workspace-split mod-vertical mod-root">
+        <div class="workspace-tabs mod-top">
+          <div class="workspace-tab-header-container">
+            <div class="workspace-tab-header-container-inner">
+              <div class="workspace-tab-header is-active">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">📝</div>
+                  <div class="workspace-tab-header-inner-title">Liquid Glass 設計メモ</div>
+                </div>
+              </div>
+              <div class="workspace-tab-header">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">📝</div>
+                  <div class="workspace-tab-header-inner-title">iOS 26 デザイントークン</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-leaf">
+            <div class="workspace-leaf-content" data-type="markdown">
+              <div class="view-header">
+                <div class="view-header-left"></div>
+                <div class="view-header-title-container">
+                  <div class="view-header-title">Liquid Glass 設計メモ</div>
+                </div>
+                <div class="view-actions">
+                  <div class="clickable-icon view-action" aria-label="Edit">✏️</div>
+                  <div class="clickable-icon view-action" aria-label="More">⋯</div>
+                </div>
+              </div>
+              <div class="view-content">
+                <div class="markdown-preview-view markdown-rendered">
+                  <h1 class="inline-title">Liquid Glass 設計メモ</h1>
+                  <h1>Liquid Glass 設計メモ</h1>
+                  <p>Obsidian のデフォルトテーマを iOS 26 の <strong>Liquid Glass</strong> 風に改変するためのメモ。
+                  すりガラスのように背景が透け、縁には光のリムが走る。</p>
+                  <h2>トークン</h2>
+                  <ul>
+                    <li>角丸: <code>--radius-xl</code> を 26px 前後に</li>
+                    <li>ぼかし: <code>backdrop-filter: blur(22px) saturate(180%)</code></li>
+                    <li>縁: 上辺に 1px のスペキュラハイライト</li>
+                  </ul>
+                  <div class="callout" data-callout="note">
+                    <div class="callout-title"><div class="callout-title-inner">Note</div></div>
+                    <div class="callout-content"><p>サイドバーは強めに透過、本文は読みやすさ優先で少し濃く。</p></div>
+                  </div>
+                  <h2>コード</h2>
+                  <pre><code>body {
+  --lg-blur: 22px;
+  backdrop-filter: blur(var(--lg-blur)) saturate(180%);
+}</code></pre>
+                  <h2>チェックリスト</h2>
+                  <p><input type="checkbox" checked> ウォールペーパー<br>
+                     <input type="checkbox" checked> ガラス面<br>
+                     <input type="checkbox"> モーダル</p>
+                  <p><a href="#">内部リンク</a> と <mark>ハイライト</mark>。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="workspace-split mod-vertical mod-right-split">
+        <div class="workspace-tabs mod-top">
+          <div class="workspace-tab-header-container">
+            <div class="workspace-tab-header-container-inner">
+              <div class="workspace-tab-header is-active">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">≡</div>
+                  <div class="workspace-tab-header-inner-title">Outline</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-leaf">
+            <div class="workspace-leaf-content" data-type="outline">
+              <div class="view-content">
+                <div class="tree-item-self is-clickable"><div class="tree-item-inner">Liquid Glass 設計メモ</div></div>
+                <div class="tree-item-self is-clickable"><div class="tree-item-inner">トークン</div></div>
+                <div class="tree-item-self is-clickable"><div class="tree-item-inner">コード</div></div>
+                <div class="tree-item-self is-clickable"><div class="tree-item-inner">チェックリスト</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-bar-item"><span>3 words</span></div>
+    <div class="status-bar-item"><span>12 characters</span></div>
+  </div>
+</div>
+
+</body>
+</html>

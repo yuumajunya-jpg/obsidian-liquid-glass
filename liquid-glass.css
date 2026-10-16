@@ -1,0 +1,654 @@
+/* ==========================================================================
+   Liquid Glass — an iOS 26 "Liquid Glass" inspired skin for Obsidian
+   --------------------------------------------------------------------------
+   Layer this on top of Obsidian's default theme (app.css / obsidian-default.css).
+   Nothing here replaces the default theme; it only overrides what is needed.
+
+   Principles
+     1. A colourful wallpaper lives on <body>.
+     2. Every chrome surface becomes a frosted, translucent "glass" panel
+        (backdrop-filter blur + saturate), with a light rim and a soft shadow.
+     3. Generous, squircle-ish corners and gaps so panels read as floating.
+     4. Content surfaces stay readable: strong tint, weaker transparency.
+
+   Works with both .theme-dark and .theme-light.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Design tokens + wallpaper
+   ========================================================================== */
+
+body {
+  /* --- Corner radius scale ------------------------------------------------- */
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 22px;
+  --radius-xl: 28px;
+
+  /* Apple "squircle" (superellipse) corners where the engine supports it.
+     If unsupported the declaration is dropped and corners stay `round`. */
+  --corner-shape: squircle;
+
+  /* --- Glass primitives ---------------------------------------------------- */
+  --lg-blur: 24px;
+  --lg-saturate: 180%;
+  --lg-brightness: 1.06;
+  --lg-backdrop: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+
+  /* Tints. --lg-chrome = sidebars / bars, --lg-surface = reading & dialog */
+  --lg-chrome: rgba(26, 28, 38, 0.44);
+  --lg-chrome-2: rgba(22, 24, 33, 0.30);
+  --lg-surface: rgba(28, 30, 40, 0.62);
+
+  /* Rim highlight (top edge catches the light) + hairline outline */
+  --lg-rim-top: rgba(255, 255, 255, 0.20);
+  --lg-rim-outline: rgba(255, 255, 255, 0.10);
+  --lg-rim-outline-hover: rgba(255, 255, 255, 0.18);
+
+  /* Elevation */
+  --lg-panel-shadow: 0 1px 1px rgba(0, 0, 0, 0.10),
+                     0 8px 24px rgba(0, 0, 0, 0.22),
+                     0 24px 60px rgba(0, 0, 0, 0.26);
+  --lg-float-shadow: 0 2px 8px rgba(0, 0, 0, 0.18),
+                     0 16px 48px rgba(0, 0, 0, 0.36),
+                     0 40px 100px rgba(0, 0, 0, 0.30);
+
+  /* Gap between floating panels */
+  --lg-gap: 10px;
+
+  /* --- Wallpaper ----------------------------------------------------------- */
+  background-color: #05060c;
+  background-image:
+    radial-gradient(58% 58% at 14% 16%, rgba(255, 95, 143, 0.34) 0%, rgba(255, 95, 143, 0) 62%),
+    radial-gradient(52% 52% at 86% 10%, rgba(106, 92, 255, 0.40) 0%, rgba(106, 92, 255, 0) 64%),
+    radial-gradient(66% 66% at 80% 88%, rgba(34, 211, 238, 0.30) 0%, rgba(34, 211, 238, 0) 66%),
+    radial-gradient(58% 58% at 18% 92%, rgba(168, 85, 247, 0.36) 0%, rgba(168, 85, 247, 0) 62%),
+    linear-gradient(160deg, #12142a 0%, #0a0b16 55%, #05060c 100%);
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+body.theme-light {
+  --lg-chrome: rgba(255, 255, 255, 0.52);
+  --lg-chrome-2: rgba(255, 255, 255, 0.38);
+  --lg-surface: rgba(255, 255, 255, 0.66);
+
+  --lg-rim-top: rgba(255, 255, 255, 0.85);
+  --lg-rim-outline: rgba(255, 255, 255, 0.55);
+  --lg-rim-outline-hover: rgba(255, 255, 255, 0.80);
+
+  --lg-panel-shadow: 0 1px 1px rgba(31, 41, 84, 0.06),
+                     0 8px 24px rgba(31, 41, 84, 0.10),
+                     0 24px 60px rgba(31, 41, 84, 0.10);
+  --lg-float-shadow: 0 2px 8px rgba(31, 41, 84, 0.10),
+                     0 16px 48px rgba(31, 41, 84, 0.18),
+                     0 40px 100px rgba(31, 41, 84, 0.14);
+
+  background-color: #eef1f8;
+  background-image:
+    radial-gradient(58% 58% at 14% 16%, rgba(255, 158, 199, 0.55) 0%, rgba(255, 158, 199, 0) 62%),
+    radial-gradient(52% 52% at 86% 10%, rgba(142, 162, 255, 0.55) 0%, rgba(142, 162, 255, 0) 64%),
+    radial-gradient(66% 66% at 80% 88%, rgba(126, 231, 255, 0.50) 0%, rgba(126, 231, 255, 0) 66%),
+    radial-gradient(58% 58% at 18% 92%, rgba(195, 156, 255, 0.50) 0%, rgba(195, 156, 255, 0) 62%),
+    linear-gradient(160deg, #f9fbff 0%, #eef1f8 55%, #e5ebf7 100%);
+}
+
+/* Even when Obsidian's own "translucent window" flag is on, we own the wallpaper. */
+body.is-translucent {
+  background-color: transparent;
+}
+
+/* ==========================================================================
+   2. App shell — floating panels with gaps
+   ========================================================================== */
+
+/* The window itself is just a transparent stage. */
+.app-container,
+.horizontal-main-container,
+.workspace {
+  background-color: transparent !important;
+}
+
+/* Surfaces whose paint we fully take over. */
+body {
+  --titlebar-background: transparent;
+  --titlebar-background-focused: transparent;
+  --ribbon-background: transparent;
+  --ribbon-background-collapsed: transparent;
+  --status-bar-background: transparent;
+  --status-bar-border-width: 0;
+}
+
+.horizontal-main-container {
+  gap: var(--lg-gap);
+  padding: var(--lg-gap);
+}
+
+.workspace {
+  gap: var(--lg-gap);
+  padding: 0;
+}
+
+/* Panels themselves carry no paint; their inner .workspace-tabs does. */
+.workspace-split,
+.workspace-split.mod-root {
+  background-color: transparent !important;
+  border-radius: var(--radius-xl);
+}
+
+/* The actual glass card: sidebars and the main editor group. */
+.workspace-split > .workspace-tabs {
+  border-radius: var(--radius-xl);
+  corner-shape: var(--corner-shape);
+  overflow: hidden;
+  background-color: var(--lg-chrome) !important;
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    inset 0 0 0 1px var(--lg-rim-outline),
+    var(--lg-panel-shadow);
+}
+
+/* The document pane is tinted a touch more so long-form text stays crisp. */
+.workspace-split.mod-root > .workspace-tabs {
+  background-color: var(--lg-surface) !important;
+}
+
+/* The focused pane gets a faint inner glow. */
+.workspace-leaf.mod-active .workspace-leaf-content[data-type='markdown'] {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-radius: calc(var(--radius-xl) - 6px);
+}
+
+/* Inner leaves inherit the glass; never repaint an opaque block on top. */
+.workspace-tabs .workspace-leaf,
+.mod-root .workspace-tabs .workspace-leaf,
+.workspace-leaf-content,
+.workspace-leaf-content .view-content {
+  background-color: transparent !important;
+}
+
+/* ==========================================================================
+   3. Title bar, ribbon, status bar
+   ========================================================================== */
+
+.titlebar {
+  position: relative;
+  height: var(--header-height);
+  background-color: var(--lg-chrome-2) !important;
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  border-bottom: 1px solid var(--lg-rim-outline);
+  box-shadow: inset 0 1px 0 var(--lg-rim-top);
+}
+.titlebar-text {
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.01em;
+}
+
+/* Ribbon (left icon strip) becomes its own rounded glass rail.
+   The default theme pushes it down by --header-height to sit under the
+   window title bar; our title bar is in normal flow, so cancel that. */
+.workspace-ribbon.mod-left {
+  margin-top: 0;
+  background-color: var(--lg-chrome) !important;
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  border: 1px solid var(--lg-rim-outline);
+  border-right: 1px solid var(--lg-rim-outline);
+  border-radius: var(--radius-xl);
+  corner-shape: var(--corner-shape);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    var(--lg-panel-shadow);
+  padding: var(--size-4-2) 0;
+  gap: var(--size-4-2);
+}
+.workspace-ribbon.mod-left.is-collapsed,
+.workspace-ribbon.is-collapsed {
+  background-color: var(--lg-chrome-2) !important;
+}
+.workspace-ribbon.mod-left:before {
+  background-color: transparent !important;
+}
+
+/* Status bar becomes a small floating glass pill (bottom-right). */
+.status-bar {
+  bottom: var(--lg-gap);
+  right: var(--lg-gap);
+  background-color: var(--lg-chrome) !important;
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--lg-rim-outline) !important;
+  border-radius: 999px !important;
+  corner-shape: var(--corner-shape);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    0 10px 30px rgba(0, 0, 0, 0.28);
+  color: var(--text-muted);
+  padding: 3px 12px;
+  min-height: 26px;
+  align-items: center;
+}
+
+/* ==========================================================================
+   4. Tabs — floating pills instead of attached tabs
+   ========================================================================== */
+
+body {
+  --tab-container-background: transparent;
+  --tab-background-active: rgba(255, 255, 255, 0.14);
+  --tab-outline-color: transparent;
+  --tab-outline-width: 0px;
+  --tab-divider-color: transparent;
+  --tab-curve: 0px;
+  --tab-radius: 999px;
+  --tab-radius-active: 999px;
+  --file-header-background: transparent;
+  --file-header-background-focused: transparent;
+  --file-header-border: none;
+}
+
+.workspace-tab-header-container {
+  background-color: transparent !important;
+  border-bottom: none;
+  height: calc(var(--header-height) + 6px);
+  padding-top: 6px;
+}
+
+/* Kill the decorative "curved shoulder" pseudo elements. */
+.workspace-tab-header-container .workspace-tab-header::before,
+.workspace-tab-header-container .workspace-tab-header::after {
+  display: none !important;
+}
+
+.workspace-tab-header {
+  border-radius: 999px !important;
+  corner-shape: var(--corner-shape);
+  overflow: hidden;
+  transition: background-color var(--anim-duration-fast) ease;
+}
+.workspace-tab-header.is-active {
+  background-color: var(--tab-background-active) !important;
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    inset 0 0 0 1px var(--lg-rim-outline) !important;
+}
+.workspace-tab-header:not(.is-active):hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.theme-light .workspace-tab-header.is-active {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+.workspace-tab-header-inner {
+  padding: 0 12px;
+}
+.workspace-tab-header-inner-title {
+  color: var(--text-muted);
+}
+.workspace-tab-header.is-active .workspace-tab-header-inner-title {
+  color: var(--text-normal);
+  font-weight: var(--font-medium);
+}
+.workspace-tab-header-status-icon {
+  border-radius: 999px;
+}
+
+/* ==========================================================================
+   5. View header (pane title bar)
+   ========================================================================== */
+
+.view-header {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--lg-rim-outline);
+  padding: 0 var(--size-4-4);
+}
+.view-header-title {
+  font-weight: var(--font-semibold);
+  letter-spacing: -0.01em;
+}
+
+/* ==========================================================================
+   6. Sidebars, file tree, outline
+   ========================================================================== */
+
+.nav-file-title,
+.nav-folder-title,
+.tree-item-self {
+  border-radius: var(--radius-m);
+  corner-shape: var(--corner-shape);
+  transition: background-color var(--anim-duration-fast) ease,
+              box-shadow var(--anim-duration-fast) ease;
+}
+.nav-file-title:hover,
+.nav-folder-title:hover,
+.tree-item-self:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+.nav-file-title.is-active,
+.tree-item-self.is-active,
+.tree-item-self.is-clickable.is-active {
+  background-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    inset 0 0 0 1px var(--lg-rim-outline);
+  color: var(--text-normal) !important;
+}
+.theme-light .nav-file-title:hover,
+.theme-light .nav-folder-title:hover,
+.theme-light .tree-item-self:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+.theme-light .nav-file-title.is-active,
+.theme-light .tree-item-self.is-active {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.workspace-sidedock-vault-profile {
+  background-color: transparent !important;
+  border-top: 1px solid var(--lg-rim-outline);
+}
+
+/* ==========================================================================
+   7. Reading & editing surfaces
+   ========================================================================== */
+
+/* Text surfaces get a stronger tint so copy stays crisp on the glass. */
+.markdown-preview-view,
+.markdown-source-view,
+.cm-editor,
+.cm-scroller {
+  background-color: transparent !important;
+}
+
+.inline-title,
+.markdown-preview-view h1,
+.markdown-preview-view h2,
+.markdown-preview-view h3 {
+  letter-spacing: -0.02em;
+}
+
+.markdown-preview-view code,
+.markdown-rendered code {
+  border-radius: 8px;
+  padding: 0.1em 0.4em;
+  background-color: rgba(255, 255, 255, 0.10);
+}
+
+.markdown-preview-view pre,
+.markdown-rendered pre {
+  border-radius: var(--radius-m);
+  corner-shape: var(--corner-shape);
+  border: 1px solid var(--lg-rim-outline);
+  background-color: rgba(0, 0, 0, 0.28) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.theme-light .markdown-preview-view pre,
+.theme-light .markdown-rendered pre {
+  background-color: rgba(255, 255, 255, 0.62) !important;
+}
+
+/* Callouts become little glass cards. */
+.callout {
+  border-radius: var(--radius-m) !important;
+  corner-shape: var(--corner-shape);
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid var(--lg-rim-outline);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    0 6px 18px rgba(0, 0, 0, 0.14);
+}
+.theme-light .callout {
+  background-color: rgba(255, 255, 255, 0.62) !important;
+}
+.callout-title {
+  border-radius: calc(var(--radius-m) - 6px);
+}
+
+mark,
+.cm-s-obsidian span.cm-highlight {
+  border-radius: 6px;
+  padding: 0 0.25em;
+  background-color: rgba(255, 208, 0, 0.35);
+}
+
+::selection {
+  background-color: hsla(var(--interactive-accent-hsl), 0.45);
+}
+
+.markdown-preview-view blockquote,
+.markdown-rendered blockquote {
+  border: 1px solid var(--lg-rim-outline);
+  border-inline-start: 3px solid var(--color-accent);
+  border-radius: var(--radius-m);
+  corner-shape: var(--corner-shape);
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: var(--size-4-2) var(--size-4-4);
+  margin-inline-start: 0;
+}
+
+/* Tables float on their own rounded glass sheet. */
+.markdown-preview-view table,
+.markdown-rendered table {
+  border-radius: var(--radius-m);
+  corner-shape: var(--corner-shape);
+  overflow: hidden;
+  border: 1px solid var(--lg-rim-outline);
+}
+
+/* Source-mode editor chrome */
+.cm-gutters {
+  background-color: transparent !important;
+  border-inline-end: 1px solid var(--lg-rim-outline) !important;
+}
+.cm-active-line,
+.cm-activeLine {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 6px;
+}
+.theme-light .cm-active-line,
+.theme-light .cm-activeLine {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ==========================================================================
+   8. Controls — buttons, inputs, toggles
+   ========================================================================== */
+
+button,
+.clickable-icon,
+.dropdown,
+input[type='text'],
+input[type='search'],
+input[type='number'],
+input[type='email'],
+input[type='password'],
+textarea {
+  border-radius: var(--radius-s);
+  corner-shape: var(--corner-shape);
+}
+
+.clickable-icon {
+  border-radius: 999px;
+  transition: background-color var(--anim-duration-fast) ease;
+}
+.clickable-icon:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+.theme-light .clickable-icon:hover {
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+button:not(.clickable-icon),
+.mod-cta {
+  border-radius: 999px;
+  corner-shape: var(--corner-shape);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.dropdown,
+input[type='text'],
+input[type='search'],
+input[type='number'],
+input[type='email'],
+input[type='password'],
+textarea {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--lg-rim-outline) !important;
+  box-shadow: inset 0 1px 0 var(--lg-rim-top);
+}
+.theme-light .dropdown,
+.theme-light input[type='text'],
+.theme-light input[type='search'],
+.theme-light input[type='number'],
+.theme-light input[type='email'],
+.theme-light input[type='password'],
+.theme-light textarea {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+/* iOS switch */
+.checkbox-container {
+  border-radius: 999px;
+  background-color: rgba(120, 120, 128, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.checkbox-container.is-enabled {
+  background-color: var(--color-green);
+}
+
+/* ==========================================================================
+   9. Overlays — modal, prompt, menu, suggestions
+   ========================================================================== */
+
+.modal-bg {
+  background-color: rgba(6, 8, 16, 0.45) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+.theme-light .modal-bg {
+  background-color: rgba(230, 235, 250, 0.45) !important;
+}
+
+.modal,
+.prompt,
+.menu,
+.suggestion-container,
+.popover,
+.tooltip {
+  background-color: var(--lg-surface) !important;
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  border: 1px solid var(--lg-rim-outline) !important;
+  border-radius: var(--radius-l) !important;
+  corner-shape: var(--corner-shape);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    var(--lg-float-shadow) !important;
+}
+
+.modal {
+  border-radius: var(--radius-xl) !important;
+  padding: var(--size-4-5);
+}
+
+.prompt {
+  border-radius: var(--radius-xl) !important;
+  overflow: hidden;
+}
+.prompt-input-container {
+  background-color: transparent;
+  border-bottom: 1px solid var(--lg-rim-outline);
+}
+.prompt-input {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.suggestion-item {
+  border-radius: var(--radius-s);
+  corner-shape: var(--corner-shape);
+}
+.suggestion-item.is-selected {
+  background-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: inset 0 0 0 1px var(--lg-rim-outline);
+}
+
+.menu {
+  padding: 6px;
+}
+.menu-item {
+  border-radius: var(--radius-s);
+  corner-shape: var(--corner-shape);
+}
+.menu-item:hover,
+.menu-item.selected {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+.theme-light .menu-item:hover,
+.theme-light .menu-item.selected {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Sliders & tooltips get the same treatment */
+input[type='range']::-webkit-slider-thumb {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ==========================================================================
+   10. Scrollbars — thin iOS-style overlay
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.36);
+  background-clip: padding-box;
+}
+.theme-light ::-webkit-scrollbar-thumb {
+  background-color: rgba(60, 60, 67, 0.28);
+  background-clip: padding-box;
+}
+
+/* ==========================================================================
+   11. Accessibility / fallbacks
+   ========================================================================== */
+
+/* Translucent surfaces need a solid tint when blur is expensive or off. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body { --lg-chrome: rgba(24, 26, 35, 0.94); --lg-surface: rgba(24, 26, 35, 0.96); }
+  body.theme-light { --lg-chrome: rgba(255, 255, 255, 0.96); --lg-surface: rgba(255, 255, 255, 0.97); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .workspace-tabs,
+  .workspace-ribbon.mod-left,
+  .titlebar,
+  .modal,
+  .prompt,
+  .menu,
+  .suggestion-container {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--background-primary) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

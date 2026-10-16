@@ -1,0 +1,1009 @@
+/* @settings
+
+name: Liquid Glass
+id: liquid-glass
+settings:
+    -
+        id: lg-glass
+        title: ガラス
+        type: heading
+        level: 2
+        collapsed: false
+    -
+        id: lg-blur
+        title: 背景のぼかし
+        description: ガラス越しの背景をどれだけぼかすか。動作が重いと感じたら下げてください。
+        type: variable-number-slider
+        default: 24
+        min: 0
+        max: 48
+        step: 1
+        format: px
+    -
+        id: lg-saturate
+        title: 背景の彩度
+        description: ぼかした背景の色の鮮やかさ。
+        type: variable-number-slider
+        default: 180
+        min: 100
+        max: 260
+        step: 5
+        format: '%'
+    -
+        id: lg-gap
+        title: パネル同士のすき間
+        type: variable-number-slider
+        default: 10
+        min: 0
+        max: 24
+        step: 1
+        format: px
+    -
+        id: lg-chrome-alpha
+        title: サイドバー等の透過度
+        description: 小さいほど背景が透けます。
+        type: variable-number-slider
+        default: 0.44
+        min: 0
+        max: 1
+        step: 0.02
+    -
+        id: lg-surface-alpha
+        title: 本文・ダイアログの透過度
+        type: variable-number-slider
+        default: 0.62
+        min: 0
+        max: 1
+        step: 0.02
+    -
+        id: lg-shape
+        title: かたち
+        type: heading
+        level: 2
+        collapsed: false
+    -
+        id: lg-radius-scale
+        title: 角丸の大きさ
+        description: 1 が基準。0.4 で控えめ、1.8 でかなり丸くなります。
+        type: variable-number-slider
+        default: 1
+        min: 0.4
+        max: 1.8
+        step: 0.05
+    -
+        id: corner-shape
+        title: 角のカーブ
+        description: squircle は Apple 風の連続曲線。未対応の環境では round になります。
+        type: variable-select
+        default: squircle
+        options:
+            -
+                label: Squircle（Apple 風）
+                value: squircle
+            -
+                label: Round（標準の円弧）
+                value: round
+    -
+        id: lg-wallpaper-heading
+        title: 壁紙
+        type: heading
+        level: 2
+        collapsed: false
+    -
+        id: lg-no-wallpaper
+        title: 壁紙をオフにする
+        type: class-toggle
+        default: false
+    -
+        id: lg-wallpaper-photo
+        title: 壁紙に画像を使う
+        description: '例: url("https://example.com/bg.jpg") / 既定は none。画像はメッシュの上に重なります。'
+        type: variable-text
+        default: none
+*/
+
+/* ==========================================================================
+   Liquid Glass — an iOS 26 "Liquid Glass" inspired theme for Obsidian
+   --------------------------------------------------------------------------
+   これは Obsidian のカスタムテーマ（theme.css）です。
+   .obsidian/themes/Liquid Glass/theme.css として配置して、
+   設定 → 外観 → テーマ から選んでください。
+
+   設計方針
+     * 見た目の担当は「ガラス面」だけ。タイトルバー・リボン・サイドバー・
+       タブバー・本文・ステータスバー・ダイアログを、ぼかしの効いた
+       半透明の角丸パネルとして塗り直す。
+     * それ以外は Obsidian デフォルトの挙動をそのまま残す。具体的には
+         - フォントサイズ / フォント / 行間（--font-*, --line-height-*）は触らない
+         - --header-height / --titlebar-height / --ribbon-width /
+           --divider-width / --file-line-width などの寸法系も触らない
+         - .titlebar の position / -webkit-app-region（ウィンドウのドラッグ）は触らない
+         - ウィンドウ操作ボタン（.titlebar-button-*）は消さない・隠さない
+         - ペインのリサイズハンドルは機能を維持（すき間ぶんヒットエリアを拡張）
+     * Obsidian のデフォルトテーマ（app.css）は必ず先に読み込まれるので、
+       ここでは「上書き」だけを書く。変数を置き換えるだけで済む箇所は
+       プロパティを直接書かずに変数を置き換える（= 影響範囲が読みやすい）。
+     * 数値は <body> の CSS 変数に集約してある。CSS スニペットや
+       Style Settings プラグインから上書きできる。
+
+   注意
+     * Obsidian 本体の設定「半透明のウィンドウ」はオフ推奨。オンにすると
+       OS のウィンドウ透過とこのテーマの壁紙が競合します。
+     * ライトテーマ（.theme-light）にも対応しています。
+   ========================================================================== */
+
+/* ==========================================================================
+   1. デザイントークン（<body> に集約）
+   ========================================================================== */
+
+body {
+  /* --- 角丸 ---------------------------------------------------------------
+     Obsidian 自身の --radius-* を置き換える。アプリ内のほぼ全ての角丸が
+     ここから決まる。s は小さめ（チェックボックス等）に保つこと。 */
+  --lg-radius-scale: 1;
+  --radius-s: calc(8px * var(--lg-radius-scale));
+  --radius-m: calc(14px * var(--lg-radius-scale));
+  --radius-l: calc(20px * var(--lg-radius-scale));
+  --radius-xl: calc(26px * var(--lg-radius-scale));
+
+  /* Apple 風の連続曲線。未対応のエンジンでは宣言ごと無視され round になる。 */
+  --corner-shape: squircle;
+
+  /* --- ガラスの基本パラメータ -------------------------------------------- */
+  --lg-blur: 24px;
+  --lg-saturate: 180%;
+  --lg-brightness: 1.06;
+  --lg-backdrop: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+
+  /* パネル同士のすき間 */
+  --lg-gap: 10px;
+
+  /* --- 着色（ダークが既定。ライトは下の body.theme-light で差し替え） -----
+     RGB と不透明度を分けておくことで、Style Settings から
+     不透明度だけをスライダーで動かせる。 */
+  --lg-chrome-color: #1a1c26;      /* サイドバー・リボン・ステータスバー */
+  --lg-chrome-2-color: #161821;    /* タイトルバー・ウィンドウ操作ボタン */
+  --lg-surface-color: #1c1e28;     /* 本文・ダイアログ */
+  --lg-chrome-alpha: 0.44;
+  --lg-chrome-2-alpha: 0.32;
+  --lg-surface-alpha: 0.62;
+  --lg-chrome: color-mix(in srgb, var(--lg-chrome-color) calc(var(--lg-chrome-alpha) * 100%), transparent);
+  --lg-chrome-2: color-mix(in srgb, var(--lg-chrome-2-color) calc(var(--lg-chrome-2-alpha) * 100%), transparent);
+  --lg-surface: color-mix(in srgb, var(--lg-surface-color) calc(var(--lg-surface-alpha) * 100%), transparent);
+
+  /* --- 押せる要素の重なり色 ---------------------------------------------- */
+  --lg-hover: rgba(255, 255, 255, 0.08);
+  --lg-selected: rgba(255, 255, 255, 0.16);
+  --lg-tab-active: rgba(255, 255, 255, 0.14);
+  --lg-frost: rgba(255, 255, 255, 0.05);   /* 引用など、ごく薄い霜面 */
+  --lg-field: rgba(255, 255, 255, 0.08);   /* 入力欄・インラインコード */
+  --lg-well: rgba(0, 0, 0, 0.26);          /* コードブロック等の凹んだ面 */
+
+  /* --- 縁のハイライトと影 ------------------------------------------------ */
+  --lg-rim-top: rgba(255, 255, 255, 0.20);      /* 上辺のスペキュラ */
+  --lg-rim-top-soft: rgba(255, 255, 255, 0.06);
+  --lg-rim-outline: rgba(255, 255, 255, 0.10);  /* 1px の輪郭 */
+  --lg-panel-shadow: 0 1px 1px rgba(0, 0, 0, 0.10),
+                     0 8px 24px rgba(0, 0, 0, 0.22),
+                     0 24px 60px rgba(0, 0, 0, 0.26);
+  --lg-float-shadow: 0 2px 8px rgba(0, 0, 0, 0.18),
+                     0 16px 48px rgba(0, 0, 0, 0.36),
+                     0 40px 100px rgba(0, 0, 0, 0.30);
+  --lg-cover: rgba(6, 8, 16, 0.45);             /* モーダルの背景幕 */
+
+  /* --- 壁紙 --------------------------------------------------------------
+     差し替えたいときは --lg-wallpaper を丸ごと上書きしてください。
+     画像を使いたいときは --lg-wallpaper-photo に url(...) を入れる。 */
+  --lg-wallpaper-base: #05060c;
+  --lg-wallpaper-photo: none;
+  --lg-wallpaper:
+    radial-gradient(58% 58% at 14% 16%, rgba(255, 95, 143, 0.34) 0%, rgba(255, 95, 143, 0) 62%),
+    radial-gradient(52% 52% at 86% 10%, rgba(106, 92, 255, 0.40) 0%, rgba(106, 92, 255, 0) 64%),
+    radial-gradient(66% 66% at 80% 88%, rgba(34, 211, 238, 0.30) 0%, rgba(34, 211, 238, 0) 66%),
+    radial-gradient(58% 58% at 18% 92%, rgba(168, 85, 247, 0.36) 0%, rgba(168, 85, 247, 0) 62%),
+    linear-gradient(160deg, #12142a 0%, #0a0b16 55%, #05060c 100%);
+}
+
+body.theme-light {
+  --lg-chrome-color: #ffffff;
+  --lg-chrome-2-color: #ffffff;
+  --lg-surface-color: #ffffff;
+
+  --lg-hover: rgba(255, 255, 255, 0.58);
+  --lg-selected: rgba(255, 255, 255, 0.86);
+  --lg-tab-active: rgba(255, 255, 255, 0.74);
+  --lg-frost: rgba(48, 58, 92, 0.05);
+  --lg-field: rgba(255, 255, 255, 0.72);
+  --lg-well: rgba(48, 58, 92, 0.07);
+
+  --lg-rim-top: rgba(255, 255, 255, 0.85);
+  --lg-rim-top-soft: rgba(255, 255, 255, 0.45);
+  /* ライトでは白い輪郭が見えないので、輪郭だけ少し暗くする */
+  --lg-rim-outline: rgba(58, 68, 104, 0.16);
+  --lg-panel-shadow: 0 1px 1px rgba(31, 41, 84, 0.06),
+                     0 8px 24px rgba(31, 41, 84, 0.10),
+                     0 24px 60px rgba(31, 41, 84, 0.10);
+  --lg-float-shadow: 0 2px 8px rgba(31, 41, 84, 0.10),
+                     0 16px 48px rgba(31, 41, 84, 0.18),
+                     0 40px 100px rgba(31, 41, 84, 0.14);
+  --lg-cover: rgba(230, 235, 250, 0.45);
+
+  --lg-wallpaper-base: #eef1f8;
+  --lg-wallpaper:
+    radial-gradient(58% 58% at 14% 16%, rgba(255, 158, 199, 0.55) 0%, rgba(255, 158, 199, 0) 62%),
+    radial-gradient(52% 52% at 86% 10%, rgba(142, 162, 255, 0.55) 0%, rgba(142, 162, 255, 0) 64%),
+    radial-gradient(66% 66% at 80% 88%, rgba(126, 231, 255, 0.50) 0%, rgba(126, 231, 255, 0) 66%),
+    radial-gradient(58% 58% at 18% 92%, rgba(195, 156, 255, 0.50) 0%, rgba(195, 156, 255, 0) 62%),
+    linear-gradient(160deg, #f9fbff 0%, #eef1f8 55%, #e5ebf7 100%);
+}
+
+/* モバイルではすき間を無くす（寸法を動かさないため） */
+body.is-mobile {
+  --lg-gap: 0px;
+}
+
+/* ==========================================================================
+   2. 壁紙
+   ========================================================================== */
+
+body {
+  background-color: var(--lg-wallpaper-base);
+  background-image: var(--lg-wallpaper);
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+/* 任意の画像レイヤー。--lg-wallpaper-photo が none のときは何も描かない。
+   メッシュの上に重なるので、写真を使うときは壁紙OFFと併用すると綺麗。 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--lg-wallpaper-photo) center / cover no-repeat fixed;
+}
+
+/* Style Settings の「壁紙をオフにする」で付くクラス */
+body.lg-no-wallpaper {
+  background-color: var(--background-primary);
+  background-image: none;
+}
+
+/* Obsidian 側が .theme-dark / .theme-light で定義している変数は、素の body では
+   負けてしまう。テーマを問わず効かせたいものだけここで上書きする。 */
+body.theme-dark,
+body.theme-light {
+  --background-modifier-form-field: var(--lg-field);
+  --shadow-l: var(--lg-float-shadow);
+  --callout-radius: var(--radius-m);
+  --callout-border-width: 1px;
+  /* ドロップダウンも入力欄と同じガラスの面に揃える
+     （既定は --interactive-normal = 不透明）。 */
+  --dropdown-background: var(--lg-field);
+  --dropdown-background-hover: var(--lg-hover);
+}
+
+/* ==========================================================================
+   3. アプリ全体 — パネルを浮かせる
+   ========================================================================== */
+
+/* ウィンドウそのものは透明な舞台にする。 */
+.app-container,
+.horizontal-main-container,
+.workspace {
+  background-color: transparent !important;
+}
+
+/* ウィンドウの縁とパネルの間にすき間を作る。上端だけは、ウィンドウ操作の
+   丸を置く帯のぶん広めに取る（--lg-btn-strip）。 */
+body:not(.is-mobile) .horizontal-main-container {
+  padding: var(--lg-top-gap) var(--lg-gap) var(--lg-gap);
+}
+body:not(.is-mobile) .workspace,
+body:not(.is-mobile) .workspace-split.mod-vertical,
+body:not(.is-mobile) .workspace-split.mod-horizontal {
+  gap: var(--lg-gap);
+}
+
+/* スプリット自体は塗らない（中の .workspace-tabs がガラス板になる）。 */
+.workspace-split,
+.workspace-split.mod-root {
+  background-color: transparent !important;
+}
+
+/* ガラス板本体。サイドバー・エディタ群すべてこれ。
+   塗り（背景とぼかし）はモバイルでも有効にする。 */
+.workspace-split > .workspace-tabs {
+  background-color: var(--lg-chrome) !important;
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+}
+
+/* 角丸・影・すき間は「パネルが浮いている」デスクトップだけに当てる。
+   モバイルは全画面なので、角丸と overflow: hidden は画面端の UI を切ってしまう。 */
+body:not(.is-mobile) .workspace-split > .workspace-tabs {
+  border-radius: var(--radius-xl);
+  corner-shape: var(--corner-shape);
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    inset 0 0 0 1px var(--lg-rim-outline),
+    var(--lg-panel-shadow);
+}
+
+/* 本文側は少し濃くして、長文の可読性を優先する。 */
+.workspace-split.mod-root > .workspace-tabs {
+  background-color: var(--lg-surface) !important;
+}
+
+/* 内側のリーフは透明のまま。ここで不透明な色を塗るとガラスが死ぬ。 */
+.workspace-tabs .workspace-leaf,
+.mod-root .workspace-tabs .workspace-leaf,
+.workspace-leaf-content,
+.view-content {
+  background-color: transparent !important;
+}
+
+/* ==========================================================================
+   4. ウィンドウまわり（タイトルバー / リボン / ステータスバー）
+   --------------------------------------------------------------------------
+   ここは特に慎重に。position / ウィンドウ操作ボタンの構造には一切触らず、
+   塗りだけを変える。ただし「ウィンドウを移動する」ためのドラッグ領域だけは、
+   下でパネルの外側（上端のすき間）に明示的に足す。
+   ========================================================================== */
+
+body {
+  /* 既定の面を透明にして、塗りは各セクションで明示的に行う */
+  --tab-container-background: transparent;
+  --ribbon-background: transparent;
+  --ribbon-background-collapsed: transparent;
+  --status-bar-background: var(--lg-chrome);
+  --status-bar-border-width: 0px;
+  --status-bar-radius: 999px;
+  --status-bar-text-color: var(--text-muted);
+
+  /* タイトルバー。隠しフレーム時はウィンドウ操作ボタンの下地にもなる色。 */
+  --titlebar-background: var(--lg-chrome-2);
+  --titlebar-background-focused: var(--lg-chrome-2);
+
+  /* 上端にだけ確保する帯の高さ。ウィンドウ操作の丸（macOS 風）をパネルと
+     重ならない位置に置くために使う。既定は 0（＝--lg-gap のまま）で、
+     隠しフレーム表示のときだけ下で 0 以外にする。 */
+  --lg-btn-strip: 0px;
+  --lg-top-gap: calc(var(--lg-gap) + var(--lg-btn-strip));
+  /* 上端のドラッグ帯から除外する幅（ウィンドウ操作ボタンが乗る範囲）。
+     帯がボタンを覆うと、Electron がクリックをドラッグ操作として吸ってしまい
+     ボタンが押せなくなるため、右端はこの幅だけ空ける。 */
+  --lg-ctrl-reserve: 0px;
+}
+
+/* --------------------------------------------------------------------------
+   上端のドラッグ領域
+   --------------------------------------------------------------------------
+   枠なし（hidden frameless）では既定の .titlebar が pointer-events: none で
+   消え、ウィンドウの移動はタブバーの空き部分に頼ることになる。タブを多く
+   開くとその空きが狭くなって掴みにくいので、パネルの外側（上端のすき間）
+   にもドラッグ領域を足す。すき間には要素が無いので操作を奪わない。
+   ・高さは --lg-top-gap（＝--lg-gap + --lg-btn-strip）。広く取りたいときは
+     Style Settings の「すき間」を広げる
+   ・右端は --lg-ctrl-reserve ぶん空ける。ウィンドウ操作ボタンがこの帯と
+     重なると、Electron がクリックをドラッグとして吸って押せなくなるため
+   ・左右と下辺はドラッグにしない（ウィンドウのリサイズを妨げないため）
+   ・パネルやモーダル（z-index が高い）より下に置く
+   -------------------------------------------------------------------------- */
+body:not(.is-mobile)::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: var(--lg-ctrl-reserve);
+  height: var(--lg-top-gap);
+  z-index: 1;
+  -webkit-app-region: drag;
+}
+
+/* 通常のフレーム時のみ、タイトルバー自体をガラスにする。
+   隠しフレーム時（Windows/Linux の枠なし）の .titlebar は
+   pointer-events: none の透明なドラッグ領域で、実体はタブ行なので
+   背景を塗ると上のタブ行を覆ってしまう。 */
+body:not(.is-hidden-frameless) .titlebar {
+  /* 上端のドラッグ帯より手前に置く（ウィンドウ操作ボタンを覆わない） */
+  z-index: var(--layer-cover);
+  background-color: var(--lg-chrome-2) !important;
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  box-shadow: inset 0 1px 0 var(--lg-rim-top);
+}
+.titlebar-text {
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   ウィンドウ操作ボタン（最小化／最大化／閉じる）を macOS 風の丸にする
+   --------------------------------------------------------------------------
+   Windows / Linux の隠しフレーム表示では、Obsidian 自身が .titlebar-button を
+   描画している（OS のオーバーレイではない）ため、CSS で見た目を変えられる。
+   既定は「高さ 39px の横長ボタン」なので、小さな丸に置き換えて、パネルの
+   さらに上（上端の帯＝--lg-btn-strip）の右寄せにまとめる。パネルとは重ならない。
+   ・色は macOS 準拠: 最小化=黄 / 最大化=緑 / 閉じる=赤（縁は少し濃い同色）
+   ・アイコンは普段は隠し、そのボタンにカーソルを乗せたときだけ薄く出す
+   ・-webkit-app-region: no-drag は既定のまま（ウィンドウ操作を妨げない）
+   サイズ・色・帯の高さは下の --lg-btn-* で調整できる。 */
+body.is-hidden-frameless:not(.is-mobile) {
+  /* 丸を収めるために上端に足す帯の高さ（0 で従来どおり --lg-gap のみ）。 */
+  --lg-btn-strip: 14px;
+  --lg-btn-size: 12px;
+  --lg-btn-gap: 8px;
+  --lg-btn-inset: var(--size-4-1);
+  --lg-btn-min: #febc2e;
+  --lg-btn-min-rim: #dea123;
+  --lg-btn-max: #28c840;
+  --lg-btn-max-rim: #1aab29;
+  --lg-btn-close: #ff5f57;
+  --lg-btn-close-rim: #e0443e;
+  --lg-btn-glyph: rgba(0, 0, 0, 0.5);
+  /* タブ行がボタン用に空ける幅。既定は Windows の大きなボタン用に 126px あるが、
+     丸は小さいので必要な分だけに詰める（そのぶんタブが広く使える）。 */
+  --frame-right-space: calc(
+    var(--lg-btn-size) * 3 + var(--lg-btn-gap) * 2 + var(--lg-btn-inset) * 2 +
+      var(--size-4-2)
+  );
+  /* 上端のドラッグ帯の右端をこの幅だけ空けて、ボタンと重ならないようにする
+     （重なると Electron がクリックをドラッグとして吸って押せなくなる）。 */
+  --lg-ctrl-reserve: calc(var(--frame-right-space) + var(--size-4-2));
+}
+
+/* ボタンを並べる箱。上端の帯の中で右寄せにする。既定は「高さ 100% の横長」
+   なので内容に合わせて縮める。 */
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button-container.mod-right {
+  top: calc((var(--lg-top-gap) - var(--lg-btn-size)) / 2);
+  right: calc(var(--lg-gap) + var(--lg-btn-inset));
+  height: auto;
+  align-items: center;
+  gap: var(--lg-btn-gap);
+  /* 既定はウィンドウ操作ボタンの下地に --titlebar-background を敷く。丸だけを
+     浮かせたいので透明にする。 */
+  background-color: transparent;
+}
+
+/* 丸そのもの。既定の横長パディング・大きさを打ち消す。
+   （コンテナの class に依存させない。隠しフレームで表示されている
+   .titlebar-button はウィンドウ操作ボタンだけ。） */
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo) {
+  flex: 0 0 auto;
+  width: var(--lg-btn-size);
+  height: var(--lg-btn-size);
+  min-width: 0;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  /* アイコンが背景画像で描かれていても消しておく。 */
+  background-image: none !important;
+}
+
+/* アイコンは普段隠す。子要素でも擬似要素でも消せるようにまとめて 0 にして、
+   そのボタンにカーソルを乗せたときだけ戻す（macOS 風）。 */
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo) > *,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo)::before,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo)::after {
+  opacity: 0;
+  transition: opacity var(--anim-duration-fast) ease;
+}
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo):hover > *,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo):hover::before,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo):hover::after {
+  opacity: 1;
+}
+
+/* 色と縁。:hover も並べて書いて、既定のホバー色（--background-modifier-hover /
+   close の error 色）を打ち消す。 */
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button.mod-minimize,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button.mod-minimize:hover {
+  background-color: var(--lg-btn-min);
+  box-shadow: inset 0 0 0 0.5px var(--lg-btn-min-rim);
+}
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button.mod-maximize,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button.mod-maximize:hover {
+  background-color: var(--lg-btn-max);
+  box-shadow: inset 0 0 0 0.5px var(--lg-btn-max-rim);
+}
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button.mod-close,
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button.mod-close:hover {
+  background-color: var(--lg-btn-close);
+  box-shadow: inset 0 0 0 0.5px var(--lg-btn-close-rim);
+}
+
+/* アイコンが .svg-icon で描かれている場合の仕上げ（小さく・細く・暗く）。 */
+body.is-hidden-frameless:not(.is-mobile) .titlebar-button:not(.mod-logo) .svg-icon {
+  width: 7px;
+  height: 7px;
+  color: var(--lg-btn-glyph);
+}
+/* 既定は close ホバー時に fill/stroke を白にするので、暗い色で塗り直す。 */
+body.is-hidden-frameless:not(.is-mobile)
+  .titlebar-button:not(.mod-logo)
+  .svg-icon
+  :is(line, path, polyline, polygon, rect, circle) {
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 1.5 !important;
+}
+
+/* リボン（左のアイコン列）を独立したガラスのレールにする。
+   レールの上端はタブバー行の高さに合わせ、その先頭行に左サイドバーの
+   開閉ボタンを収める（開閉ボタンの詳細は下のコメント参照）。
+   アイコン列の位置は既定と同じに保つ（margin-top を消したぶんを
+   padding-top に足して相殺する）ので、先頭アイコンがドラッグ領域に
+   重なることはない。
+
+   セレクタは .mod-left と .mod-primary の両方を並べる。Obsidian の
+   バージョンによってリボン本体の class が異なり（旧: mod-left /
+   新: mod-primary）、片方だけだとルールが丸ごと当たらず開閉ボタンが
+   リボンの外（ウィンドウ左上）に浮いてしまうため。 */
+body:not(.is-mobile) .workspace-ribbon.mod-left,
+body:not(.is-mobile) .workspace-ribbon.mod-primary {
+  background-color: var(--lg-chrome) !important;
+  /* position: relative は必須。左サイドバーの開閉ボタン
+     （.workspace-ribbon .sidebar-toggle-button、既定 position: absolute）の
+     基準をリボン自身にするため。これが無いとボタンは .app-container 基準になり、
+     リボンの外（ウィンドウの左上）に浮いてしまう。 */
+  position: relative;
+  /* レールをタブバー行の高さから下まで伸ばし、開閉ボタンをこの箱の先頭に収める。
+     既定は margin-top でレールの上に 1 行分の隙間を空けており、開閉ボタンは
+     その隙間（ウィンドウ左上＝レールの外）に浮いていた。padding-top を
+     その 1 行分ぶん増やして、アイコン列の位置は変えずに上端だけ伸ばす。 */
+  margin-top: 0;
+  padding-top: calc(var(--header-height) + var(--size-4-2));
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  /* 既定も border-right を持つので、太さは --divider-width のままにして
+     色だけガラスの輪郭に置き換える（太さを変えるとレイアウトがずれる）。 */
+  border-right: var(--divider-width) solid var(--lg-rim-outline);
+  border-radius: var(--radius-xl);
+  corner-shape: var(--corner-shape);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    inset 0 0 0 1px var(--lg-rim-outline),
+    var(--lg-panel-shadow);
+}
+body:not(.is-mobile) .workspace-ribbon.mod-left.is-collapsed,
+body:not(.is-mobile) .workspace-ribbon.mod-primary.is-collapsed {
+  background-color: var(--lg-chrome-2) !important;
+}
+/* リボンの左上を埋めている擬似要素は透明にする（塗るとガラスとズレる）。
+   -webkit-app-region: drag はそのまま残すこと。 */
+body:not(.is-mobile) .workspace-ribbon.mod-left:before,
+body:not(.is-mobile) .workspace-ribbon.mod-primary:before {
+  background-color: transparent !important;
+}
+
+/* 左サイドバーの開閉ボタンは、リボン（左端のアイコン列＝設定などがある箱）の
+   左上にそのまま置く。既定の position: absolute; top: 0; left: 0 を、
+   上の「リボンを position: relative にする」ことでリボン基準にしている。
+   こうするとボタンはリボンの箱の先頭に収まり、ウィンドウの左上に浮かない。 */
+
+/* ステータスバーは右下に浮かぶ小さなピル。 */
+body:not(.is-mobile) .status-bar {
+  bottom: var(--lg-gap);
+  right: var(--lg-gap);
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    0 10px 30px rgba(0, 0, 0, 0.28);
+  padding: 3px 12px;
+  min-height: 26px;
+  align-items: center;
+}
+
+/* ==========================================================================
+   5. タブ — 「くっつくタブ」をやめてピル型にする
+   ========================================================================== */
+
+body {
+  --tab-background-active: var(--lg-tab-active);
+  --tab-outline-width: 0px;
+  --tab-outline-color: transparent;
+  --tab-divider-color: transparent;
+  --tab-curve: 0px;
+  --tab-radius: 999px;
+  --tab-radius-active: 999px;
+
+  --tab-text-color: var(--text-muted);
+  --tab-text-color-active: var(--text-normal);
+  --tab-text-color-focused: var(--text-muted);
+  --tab-text-color-focused-active: var(--text-normal);
+
+  --file-header-background: transparent;
+  --file-header-background-focused: transparent;
+  /* 既定は透明な 1px 罫線。太さを保ったまま色だけ見えるようにする。 */
+  --file-header-border: var(--border-width) solid var(--lg-rim-outline);
+}
+
+.workspace-tab-header-container {
+  background-color: transparent !important;
+  border-bottom: none;
+}
+
+/* 既定の「肩のカーブ」装飾は邪魔なので消す */
+.workspace-tab-header-container .workspace-tab-header::before,
+.workspace-tab-header-container .workspace-tab-header::after {
+  display: none !important;
+}
+
+/* メインタブは --tab-radius-active: 999px でピルになる。
+   サイドバーのタブだけは既定が --radius-s 固定なので、同じくピルに揃える。 */
+.workspace-tab-header-container .workspace-tab-header {
+  corner-shape: var(--corner-shape);
+  transition: background-color var(--anim-duration-fast) ease;
+}
+.mod-left-split .workspace-tab-header-container .workspace-tab-header,
+.mod-right-split .workspace-tab-header-container .workspace-tab-header {
+  border-radius: 999px;
+  corner-shape: var(--corner-shape);
+}
+/* 既定の box-shadow は --tab-outline-width: 0 で消えている。
+   ここは輪郭を足したいので !important で上書きする。 */
+.workspace-tab-header-container .workspace-tab-header.is-active {
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    inset 0 0 0 1px var(--lg-rim-outline) !important;
+}
+/* サイドバーのアクティブタブは既定で --background-modifier-hover を敷くので、
+   タブ用の色に置き換える（メイン側は --tab-background-active 経由）。 */
+.mod-left-split .workspace-tab-header-container .workspace-tab-header.is-active,
+.mod-left-split .workspace-tab-header-container .workspace-tab-header.has-active-menu,
+.mod-right-split .workspace-tab-header-container .workspace-tab-header.is-active,
+.mod-right-split .workspace-tab-header-container .workspace-tab-header.has-active-menu {
+  background-color: var(--lg-tab-active);
+}
+
+/* ==========================================================================
+   6. ビューヘッダ（ペインのタイトル行）
+   ========================================================================== */
+
+.view-header {
+  background-color: transparent !important;
+}
+.view-header-title {
+  font-weight: var(--font-semibold);
+  letter-spacing: -0.01em;
+}
+
+/* ==========================================================================
+   7. サイドバー（ファイル一覧 / アウトライン）
+   ========================================================================== */
+
+body {
+  --nav-item-radius: var(--radius-m);
+  --nav-item-background-hover: var(--lg-hover);
+  --nav-item-background-active: var(--lg-selected);
+}
+.nav-file-title,
+.nav-folder-title,
+.tree-item-self {
+  transition: background-color var(--anim-duration-fast) ease,
+              box-shadow var(--anim-duration-fast) ease;
+}
+.nav-file-title.is-active,
+.nav-folder-title.is-active,
+.tree-item-self.is-active {
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-top),
+    inset 0 0 0 1px var(--lg-rim-outline);
+}
+
+.workspace-sidedock-vault-profile {
+  background-color: transparent !important;
+  border-top: 1px solid var(--lg-rim-outline);
+}
+
+/* ==========================================================================
+   8. 読む・書く面（エディタ / プレビュー）
+   ========================================================================== */
+
+.markdown-preview-view,
+.markdown-source-view,
+.cm-editor,
+.cm-scroller {
+  background-color: transparent !important;
+}
+
+.inline-title,
+.markdown-preview-view h1,
+.markdown-preview-view h2,
+.markdown-preview-view h3 {
+  letter-spacing: -0.02em;
+}
+
+/* インラインコードは薄く、コードブロックは一段暗い「窪み」に。
+   --code-background は Obsidian 自身が pre / code の両方で使う変数なので、
+   ブロック側で変数ごと差し替えるのが一番安全。 */
+body {
+  --code-background: var(--lg-field);
+  --code-radius: var(--radius-s);
+}
+.markdown-rendered pre,
+.markdown-preview-view pre {
+  --code-background: var(--lg-well);
+  border-radius: var(--radius-m);
+  corner-shape: var(--corner-shape);
+  box-shadow: inset 0 1px 0 var(--lg-rim-top-soft);
+}
+
+/* コールアウトは Obsidian 既定の「種類ごとの色」を活かしたまま、
+   角丸と上辺のハイライトだけを足す（背景は塗り替えない）。 */
+.callout {
+  corner-shape: var(--corner-shape);
+  box-shadow: inset 0 1px 0 var(--lg-rim-top-soft);
+}
+
+.markdown-preview-view blockquote,
+.markdown-rendered blockquote {
+  border: 1px solid var(--lg-rim-outline);
+  border-inline-start: 3px solid var(--color-accent);
+  border-radius: var(--radius-m);
+  corner-shape: var(--corner-shape);
+  background-color: var(--lg-frost);
+  padding: var(--size-4-2) var(--size-4-4);
+  margin-inline-start: 0;
+}
+
+/* テーブルは Obsidian 既定のまま（罫線の太さ・色は触らない）。
+   既定は border-collapse: collapse なので角丸は効かず、
+   ここで角丸を足すと罫線が二重に見えるだけになるため、あえて残す。 */
+
+/* エディタの行番号まわり */
+.cm-gutters {
+  background-color: transparent !important;
+  border-inline-end: 1px solid var(--lg-rim-outline) !important;
+}
+.cm-active-line,
+.cm-activeLine {
+  background-color: var(--lg-hover) !important;
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   9. 操作部品（ボタン / 入力欄 / トグル）
+   ========================================================================== */
+
+button,
+.clickable-icon,
+.dropdown,
+input[type='text'],
+input[type='search'],
+input[type='number'],
+input[type='email'],
+input[type='password'],
+textarea {
+  border-radius: var(--radius-s);
+  corner-shape: var(--corner-shape);
+}
+
+.clickable-icon {
+  border-radius: 999px;
+  transition: background-color var(--anim-duration-fast) ease;
+}
+
+button:not(.clickable-icon),
+.mod-cta {
+  border-radius: 999px;
+  corner-shape: var(--corner-shape);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* 入力欄の枠線は色だけ差し替える。太さ（--input-border-width）は触らないので
+   レイアウトはずれないし、プロパティ画面のように既定で枠 0 の場所も崩れない。
+   .dropdown は既定で border: 0 + --input-shadow なので、ここでは触らない。 */
+input[type='text'],
+input[type='search'],
+input[type='number'],
+input[type='email'],
+input[type='password'],
+textarea {
+  border-color: var(--lg-rim-outline);
+}
+/* コマンドパレットの入力欄は枠を消し、下線だけガラスの輪郭に合わせる。 */
+input.prompt-input,
+.prompt-input-container input {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+input.prompt-input {
+  border-bottom-color: var(--lg-rim-outline) !important;
+}
+
+/* iOS 風スイッチ（設定画面のトグル） */
+.checkbox-container {
+  border-radius: 999px;
+  background-color: rgba(120, 120, 128, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.checkbox-container.is-enabled {
+  background-color: var(--color-green);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ==========================================================================
+   10. オーバーレイ（モーダル / コマンドパレット / メニュー / 候補）
+   --------------------------------------------------------------------------
+   多くは Obsidian 側に専用の変数があるので、それを使う。
+   （ツールチップと通知は白文字 x 暗い背景なので触らない：触ると
+     ライトテーマで文字が読めなくなる。）
+   ========================================================================== */
+
+body {
+  --modal-background: var(--lg-surface);
+  --modal-border-color: var(--lg-rim-outline);
+  --modal-radius: var(--radius-xl);
+  /* .modal / .prompt の影は --shadow-l 由来（上部のテーマ別ブロックで差し替え）。
+     --modal-shadow は既定テーマでは未使用。 */
+
+  --prompt-background: var(--lg-surface);
+  --prompt-backdrop-filter: var(--lg-backdrop);
+  --prompt-border-color: var(--lg-rim-outline);
+  --prompt-border-width: 1px;
+
+  --suggestion-background: var(--lg-surface);
+  --suggestion-backdrop-filter: var(--lg-backdrop);
+
+  --menu-background: var(--lg-surface);
+  --menu-backdrop-filter: var(--lg-backdrop);
+  --menu-border-color: var(--lg-rim-outline);
+  --menu-radius: var(--radius-l);
+  --menu-shadow: var(--lg-float-shadow);
+  --menu-padding: 6px;
+}
+
+/* .modal には backdrop-filter 用の変数が無いので直接指定する */
+.modal {
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  corner-shape: var(--corner-shape);
+}
+
+.modal-bg {
+  background-color: var(--lg-cover) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+.prompt {
+  corner-shape: var(--corner-shape);
+  overflow: hidden;
+}
+.prompt-input-container {
+  background-color: transparent;
+}
+
+/* ホバープレビュー等のポップオーバー */
+.popover {
+  background-color: var(--lg-surface);
+  -webkit-backdrop-filter: var(--lg-backdrop);
+  backdrop-filter: var(--lg-backdrop);
+  border-color: var(--lg-rim-outline);
+  border-radius: var(--radius-l);
+  corner-shape: var(--corner-shape);
+  box-shadow: var(--lg-float-shadow);
+}
+
+.suggestion-item {
+  border-radius: var(--radius-s);
+  corner-shape: var(--corner-shape);
+}
+.suggestion-item.is-selected {
+  background-color: var(--lg-tab-active) !important;
+  box-shadow: inset 0 0 0 1px var(--lg-rim-outline);
+}
+
+.menu-item {
+  border-radius: var(--radius-s);
+  corner-shape: var(--corner-shape);
+}
+.menu-item:hover,
+.menu-item.selected {
+  background-color: var(--lg-tab-active);
+}
+
+/* ==========================================================================
+   11. スクロールバー（細いオーバーレイ表示）
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.36);
+  background-clip: padding-box;
+}
+.theme-light ::-webkit-scrollbar-thumb {
+  background-color: rgba(60, 60, 67, 0.28);
+  background-clip: padding-box;
+}
+
+/* ==========================================================================
+   12. ペインのリサイズハンドル
+   --------------------------------------------------------------------------
+   すき間を空けたぶん、既定の 3px 幅ではマウスが当たらない。
+   見た目の罫線は消しつつ、すき間全体をヒットエリアに広げる。
+   （機能を殺さないための調整なので消さないこと）
+   ========================================================================== */
+
+.workspace-leaf-resize-handle {
+  /* 既定は border で 1px の罫線を描く。すき間があるので罫線は不要。
+     hover で border-color がアクセントに戻らないよう !important で固定する。 */
+  border-color: transparent !important;
+}
+.workspace-split.mod-left-split > .workspace-leaf-resize-handle,
+.workspace-split.mod-vertical > * > .workspace-leaf-resize-handle {
+  inset-inline-end: calc(var(--lg-gap) * -1);
+  width: calc(var(--divider-width-hover) + var(--lg-gap));
+}
+.workspace-split.mod-right-split > .workspace-leaf-resize-handle {
+  inset-inline-start: calc(var(--lg-gap) * -1);
+  width: calc(var(--divider-width-hover) + var(--lg-gap));
+}
+.workspace-split.mod-horizontal > * > .workspace-leaf-resize-handle {
+  bottom: calc(var(--lg-gap) * -1);
+  height: calc(var(--divider-width-hover) + var(--lg-gap));
+}
+
+/* ヒットエリアをすき間ぶん広げたので、既定の hover（幅いっぱいを
+   アクセント色で塗る）だと太すぎる。中央の細い線だけを出す。 */
+@media (hover: hover) {
+  .workspace-leaf-resize-handle:hover {
+    background-color: transparent;
+  }
+  .workspace-split.mod-left-split > .workspace-leaf-resize-handle:hover,
+  .workspace-split.mod-right-split > .workspace-leaf-resize-handle:hover,
+  .workspace-split.mod-vertical > * > .workspace-leaf-resize-handle:hover {
+    background-image: linear-gradient(var(--divider-color-hover), var(--divider-color-hover));
+    background-size: var(--divider-width-hover) 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .workspace-split.mod-horizontal > * > .workspace-leaf-resize-handle:hover {
+    background-image: linear-gradient(var(--divider-color-hover), var(--divider-color-hover));
+    background-size: 100% var(--divider-width-hover);
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}
+
+/* ==========================================================================
+   13. フォールバック
+   ========================================================================== */
+
+/* backdrop-filter が無い環境では、透過を保ったまま不透明に近づける。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body {
+    --lg-chrome-alpha: 0.94;
+    --lg-chrome-2-alpha: 0.92;
+    --lg-surface-alpha: 0.96;
+  }
+}
+
+/* OS 側で「透明度を下げる」設定のときは、ぼかしをやめて塗りを濃くする。 */
+@media (prefers-reduced-transparency: reduce) {
+  body {
+    --lg-blur: 0px;
+    --lg-saturate: 100%;
+    --lg-chrome-alpha: 0.94;
+    --lg-chrome-2-alpha: 0.92;
+    --lg-surface-alpha: 0.96;
+  }
+}

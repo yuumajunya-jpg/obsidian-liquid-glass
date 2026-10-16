@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Obsidian Liquid Glass — Overlays</title>
+<link rel="stylesheet" href="obsidian-default.css">
+<link rel="stylesheet" href="theme/theme.css">
+<style>
+  html { zoom: 0.618; }
+  html, body { height: 100%; }
+  .workspace-split { height: 100%; }
+  .workspace-split.mod-left-split { width: 264px; flex: 0 0 264px !important; }
+  .workspace-split.mod-right-split { width: 300px; flex: 0 0 300px !important; }
+  .workspace-split.mod-root { flex: 1 1 auto !important; width: auto !important; min-width: 0; }
+  .workspace-split > .workspace-tabs { flex: 1 1 auto; }
+  .workspace-tabs > .workspace-leaf { flex: 1 1 auto; min-height: 0; }
+  .workspace-leaf { min-height: 0; }
+  .workspace-leaf-content .view-content { flex: 1 1 auto; min-height: 0; }
+
+  /* lay the overlay pieces out so all three are visible at once */
+  .modal-container { align-items: flex-start; justify-content: flex-start; }
+  .modal { margin: 60px 40px; }
+  .prompt { position: absolute; top: 60px; inset-inline-end: 40px; width: 520px; }
+  .menu { position: absolute; top: 420px; inset-inline-start: 340px; width: 240px; }
+</style>
+</head>
+<body class="theme-dark is-frameless show-view-header show-ribbon">
+
+<div class="app-container">
+  <div class="titlebar">
+    <div class="titlebar-inner">
+      <div class="titlebar-button-container mod-left"><div class="titlebar-button"><span>My vault</span></div></div>
+      <div class="titlebar-text">Liquid Glass — overlays</div>
+    </div>
+  </div>
+
+  <div class="horizontal-main-container">
+    <div class="workspace">
+      <div class="workspace-ribbon mod-left">
+        <div class="side-dock-actions">
+          <div class="clickable-icon side-dock-ribbon-action">🗂</div>
+          <div class="clickable-icon side-dock-ribbon-action">🔍</div>
+        </div>
+        <div class="side-dock-settings">
+          <div class="clickable-icon side-dock-ribbon-action">⚙️</div>
+        </div>
+      </div>
+
+      <div class="workspace-split mod-vertical mod-left-split">
+        <div class="workspace-tabs mod-top">
+          <div class="workspace-tab-header-container">
+            <div class="workspace-tab-header-container-inner">
+              <div class="workspace-tab-header is-active">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">🗂</div>
+                  <div class="workspace-tab-header-inner-title">Files</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-leaf"><div class="workspace-leaf-content" data-type="file-explorer">
+            <div class="view-content">
+              <div class="nav-files-container">
+                <div class="tree-item-self nav-file-title is-clickable is-active"><div class="tree-item-inner nav-file-title-content">Liquid Glass 設計メモ</div></div>
+                <div class="tree-item-self nav-file-title is-clickable"><div class="tree-item-inner nav-file-title-content">iOS 26 デザイントークン</div></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+
+      <div class="workspace-split mod-vertical mod-root">
+        <div class="workspace-tabs mod-top">
+          <div class="workspace-tab-header-container">
+            <div class="workspace-tab-header-container-inner">
+              <div class="workspace-tab-header is-active">
+                <div class="workspace-tab-header-inner">
+                  <div class="workspace-tab-header-inner-icon">📝</div>
+                  <div class="workspace-tab-header-inner-title">Liquid Glass 設計メモ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-leaf">
+            <div class="workspace-leaf-content" data-type="markdown">
+              <div class="view-header">
+                <div class="view-header-left"></div>
+                <div class="view-header-title-container"><div class="view-header-title">Liquid Glass 設計メモ</div></div>
+                <div class="view-actions"><div class="clickable-icon view-action">⋯</div></div>
+              </div>
+              <div class="view-content">
+                <div class="markdown-preview-view markdown-rendered">
+                  <h1>Liquid Glass 設計メモ</h1>
+                  <p>背後のウォールペーパーがぼかし越しに透ける。</p>
+                  <blockquote><p>引用は半透明のカードになる。</p></blockquote>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar"><div class="status-bar-item"><span>3 words</span></div></div>
+</div>
+
+<!-- ===== Overlays ===== -->
+<div class="modal-container mod-dim">
+  <div class="modal-bg"></div>
+  <div class="modal mod-settings">
+    <div class="modal-close-button"></div>
+    <div class="vertical-tab-header" style="display:flex;flex-direction:column;gap:6px;width:180px;float:left;margin-right:20px">
+      <div class="vertical-tab-nav-item is-active">一般</div>
+      <div class="vertical-tab-nav-item">エディタ</div>
+      <div class="vertical-tab-nav-item">外観</div>
+      <div class="vertical-tab-nav-item">ホットキー</div>
+    </div>
+    <div class="vertical-tab-content">
+      <h2>外観</h2>
+      <div class="setting-item">
+        <div class="setting-item-info"><div class="setting-item-name">基本テーマ</div><div class="setting-item-description">ライト / ダーク</div></div>
+        <div class="setting-item-control"><div class="dropdown"><span class="dropdown-label">ダーク</span></div></div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-item-info"><div class="setting-item-name">すりガラス</div><div class="setting-item-description">ぼかしと透過</div></div>
+        <div class="setting-item-control"><div class="checkbox-container is-enabled"><input type="checkbox" checked><div class="checkbox-marker"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="prompt">
+  <div class="prompt-input-container">
+    <input class="prompt-input" type="text" value="liquid">
+  </div>
+  <div class="prompt-results">
+    <div class="suggestion-item is-selected"><div class="suggestion-title">Liquid Glass 設計メモ</div></div>
+    <div class="suggestion-item"><div class="suggestion-title">iOS 26 デザイントークン</div></div>
+    <div class="suggestion-item"><div class="suggestion-title">Obsidian 変数メモ</div></div>
+  </div>
+</div>
+
+<div class="menu">
+  <div class="menu-item"><div class="menu-item-title">新規ノート</div></div>
+  <div class="menu-item"><div class="menu-item-title">名前を変更</div></div>
+  <div class="menu-item is-separator"></div>
+  <div class="menu-item"><div class="menu-item-title">削除</div></div>
+</div>
+
+</body>
+</html>
