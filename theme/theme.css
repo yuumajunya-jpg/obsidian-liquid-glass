@@ -758,18 +758,19 @@ body {
 }
 
 /* コールアウトは「種類ごとの色を残したガラスカード」にする。
-   ガラスの面（--lg-callout）の上に、種類の色（--callout-color）を上澄みとして薄く
-   重ねるので、種類の見分け（色）と、透け・ぼかし・輪郭によるガラス感が両立する。
+   種類の色（--callout-color）を、ガラスの面（--lg-callout）に color-mix で混ぜて
+   1枚の半透明の面にする。色は残り、透け・ぼかし・輪郭でガラス感も残る。
    角丸は --callout-radius（= --radius-m）で既に効いている。 */
 .callout {
   corner-shape: var(--corner-shape);
-  /* ガラスの下地。既定は種類の色を不透明寄りに敷く（rgba(..., 0.1)）ので置き換える。 */
-  background-color: var(--lg-callout) !important;
-  /* その上に種類の色を薄く重ねる（上澄み）。濃さは --lg-callout-tint。
-     背景画像は既定で none、他のどこからも指定されないのでここで入れて問題ない。 */
-  background-image: linear-gradient(
-    rgba(var(--callout-color), var(--lg-callout-tint)),
-    rgba(var(--callout-color), var(--lg-callout-tint))
+  /* color-mix が使えない環境向けの保険（色だけを薄く敷く）。 */
+  background-color: rgba(var(--callout-color), var(--lg-callout-tint)) !important;
+  /* 本命。--lg-callout-tint（0〜1 の数値）を calc で % に直して混ぜる。
+     background-image を使わないので、既定側に背景画像を握られていても効く。 */
+  background-color: color-mix(
+    in srgb,
+    rgb(var(--callout-color)) calc(var(--lg-callout-tint) * 100%),
+    var(--lg-callout)
   ) !important;
   -webkit-backdrop-filter: var(--lg-callout-backdrop);
   backdrop-filter: var(--lg-callout-backdrop);
