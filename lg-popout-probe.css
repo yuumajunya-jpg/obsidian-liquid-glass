@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Liquid Glass — ポップアウト透過の「確認用プローブ」
+   ==========================================================================
+   これはテーマの一部ではなく、テスト専用の CSS スニペットです。
+
+   使い方:
+     1. このファイルを  <Vault>/.obsidian/snippets/  にコピーする
+        （snippets フォルダが無ければ作る）
+     2. Obsidian: 設定 → 外観 → CSSスニペット → 「スニペットを再読み込み」→ これを ON
+     3. タブを右クリック →「新しいウィンドウで開く」でポップアウトを出す
+     4. ポップアウトの右上に出る「バッジ」と、デスクトップが透けているかを見る
+     5. 確認が終わったら OFF にする（またはファイルを消す）
+
+   やっていること:
+     A) ポップアウトの右上にバッジを出し、body に is-translucent が付いているかを表示
+     B) ポップアウトの背景・パネル・ぼかしを強制的に透明にして、
+        「ウィンドウそのものが透明か（＝デスクトップが透けるか）」を試す
+        ※ 文字は読みにくくなります。それが正常です（判定用に全透過させています）
+   ========================================================================== */
+
+/* --- A) 判定バッジ ------------------------------------------------------- */
+body.is-popout-window::after {
+  content: "probe: is-translucent なし（設定OFF / 未対応）";
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 2147483647;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #b3261e;
+  color: #ffffff;
+  font-family: var(--font-monospace, monospace);
+  font-size: 12px;
+  line-height: 1.6;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+body.is-popout-window.is-translucent::after {
+  content: "probe: is-translucent あり（設定ON）";
+  background: #1b7f3b;
+}
+
+/* --- B) 強制全透過（ウィンドウが透明かの判定） --------------------------- */
+body.is-popout-window {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+/* テーマの壁紙写真レイヤー（body::before）を止める */
+body.is-popout-window::before {
+  display: none !important;
+}
+body.is-popout-window .app-container,
+body.is-popout-window .horizontal-main-container,
+body.is-popout-window .workspace,
+body.is-popout-window .workspace-tabs,
+body.is-popout-window .workspace-leaf,
+body.is-popout-window .workspace-leaf-content,
+body.is-popout-window .view-content,
+body.is-popout-window .markdown-preview-view,
+body.is-popout-window .titlebar {
+  background-color: transparent !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
