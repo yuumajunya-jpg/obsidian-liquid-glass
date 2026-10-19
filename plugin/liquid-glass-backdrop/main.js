@@ -1,102 +1,121 @@
 /* =============================================================================
-   Liquid Glass — Backdrop （ローカル補助プラグイン）
+   Liquid Glass — Backdrop
    -----------------------------------------------------------------------------
-   ポップアウト（別ウィンドウ）に Windows の背景素材を当てて、テーマ
-   「Liquid Glass」の半透明表示をポップアウトでも有効にするための小さな
-   プラグインです。
+   ポップアウト（別ウィンドウ）だけを「背後のウィンドウ／デスクトップが透ける」
+   状態にする小さなローカルプラグインです。メインウィンドウはテーマ既定の
+   不透明な見た目のまま、一切変えません。
 
-   メインウィンドウはテーマ既定の不透明な見た目のままにしたいので、一切触りません。
-   透かすのはポップアウトだけ、という切り分けです。
-   （INCLUDE_MAIN_WINDOW を true にすればメインもこのプラグインが担当します。）
+   ── なぜプラグインが必要か ────────────────────────────────────────────────
+   ウィンドウの背景を OS の素材（Acrylic / Mica）にするには Electron の
+   win.setBackgroundMaterial() を JS から呼ぶ必要があり、CSS では不可能です。
+   Obsidian はポップアウトを不透明で生成し、素材は当てません。既存プラグイン
+   （Translucent BG / Pseudo Mica）は「自分が動いているウィンドウ＝メイン」に
+   1回だけ当てる実装なので、ポップアウトには効きません。
 
-   2つの別の層があるので、分けて考えます。
-     (A) ウィンドウ側 … setBackgroundMaterial() で OS に素材を描かせる（Electron）
-     (B) ページ側     … body に is-translucent を付けて、テーマの透明化を効かせる（CSS）
+   実験で分かった2つの条件:
+     ・素材は「ウィンドウが出来た後」に当てる必要がある
+       （生成前に当てても効かない。既存ポップアウトへ後から1回だけでも効かなかった）
+     ・ページ側の body.is-translucent（テーマが下地を外す合図）は1回で足りる
 
-   (B) は1回付ければ十分です（テーマが不透明な下地を外すだけ）。
-   (A) は「ウィンドウが出来た後に当てる」必要があります。生成前に当てても効かず、
-   ポップアウトに後から1回だけ当てても効かないケースがありました。
-   そのため本プラグインは
+   ── 機能要件 ──────────────────────────────────────────────────────────────
+   R1 ポップアウトに setBackgroundMaterial(MATERIAL) を当てる（既定 acrylic）
+   R2 当てるタイミング: 有効化時 / 新規ウィンドウ生成直後（数回リトライ）/
+      前面に来たとき / 保険で1.5秒ごと
+   R3 ポップアウトの body に is-translucent を付ける（不足時のみ。約12秒ごとに再確認）
+   R4 ポップアウトの --workspace-background-translucent / --titlebar-background* を
+      透明に（Obsidian 自身が敷く60%の膜を止める）
+   R5 メインウィンドウには一切書き込まない
+   R6 無効化したら、ポップアウトだけ元に戻す
+   R7 設定はこのファイル冒頭の定数
 
-     ・起動時に、そのとき開いているポップアウトへ当てる
-     ・新しいウィンドウが開いたら、数回に分けて当てる（生成直後は無視されるため）
-     ・ウィンドウが前面に来たら当て直す
-     ・保険として低頻度で当て直す
-
-   という順で (A) を当て続け、(B) は足りないときだけ付けます。
-
-   素材を変えたいときは、下の MATERIAL を書き換えてください。
-     'acrylic' … 背後のウィンドウをぼかす（既定・ポップアウト向き）
-     'mica'    … デスクトップの壁紙を写す
-     'tabbed'  … タブ付きタイトルバー相当
-     'none'    … 素材なし（無効化したいとき）
+   やらないこと: ウィンドウの角丸・影・形の変更（OS 領域）、メインウィンドウの
+   半透明化、透け方の色やぼかし量の制御（OS 依存）、Obsidian 本体設定の変更。
    ========================================================================== */
 
 const { Plugin } = require("obsidian");
 
-/* 適用する素材。 */
+/* --- 設定 (R7) ------------------------------------------------------------ */
+
+/* 適用する背景素材。
+     'acrylic' … 背後のウィンドウをぼかす（ポップアウト向き・既定）
+     'mica'    … デスクトップの壁紙を写す
+     'tabbed'  … タブ付きタイトルバー相当
+     'none'    … 素材なし */
 const MATERIAL = "acrylic";
 
-/* メインウィンドウもこのプラグインに任せるか。
-   false（既定）＝メインは触らない／ポップアウトだけ担当。 */
+/* メインウィンドウもこのプラグインに任せるか。既定 false＝メインは触らない (R5)。 */
 const INCLUDE_MAIN_WINDOW = false;
 
-/* 新しいウィンドウに当てるタイミング（ミリ秒）。生成直後の1回は効かないことが
-   あるので、少し間隔を空けて数回試します。 */
-const WINDOW_OPEN_RETRIES = [0, 250, 750, 2000];
+/* 新しいウィンドウに当てるタイミング（ms）。生成直後の1回は無視されることがある。 (R2b) */
+const OPEN_RETRY_DELAYS = [0, 250, 750, 2000];
 
-/* 保険の当て直し間隔（ミリ秒）。Obsidian がウィンドウを作り直した場合でも、
-   これで最大この間隔までに元に戻ります。 */
+/* 保険の当て直し間隔（ms）。 (R2d) */
 const SAFETY_INTERVAL_MS = 1500;
 
-/* 各ウィンドウのページ側で実行する処理（冪等）。 */
-const PAGE_SCRIPT =
-  "document.body.classList.add('is-translucent');" +
-  "document.body.style.setProperty('--workspace-background-translucent','transparent');" +
-  "document.body.style.setProperty('--titlebar-background','transparent');" +
-  "document.body.style.setProperty('--titlebar-background-focused','transparent');" +
-  "true";
+/* 保険ループ何回に1回、ページ側（is-translucent など）を再確認するか。 (R3)
+   8 × 1.5 秒 ＝ 約12秒。 */
+const PAGE_RECHECK_EVERY = 8;
 
-/* アンロード時（プラグインを切ったとき）の巻き戻し。 */
-const UNDO_SCRIPT =
-  "document.body.classList.remove('is-translucent');" +
-  "['--workspace-background-translucent','--titlebar-background','--titlebar-background-focused']" +
-  ".forEach(n => document.body.style.removeProperty(n));" +
-  "true";
+/* 動作確認用のログを出すか。 */
+const DEBUG = false;
+
+/* --- 実際に流すスクリプト -------------------------------------------------- */
+
+/* ポップアウトの document で実行する内容（冪等）。 (R3)(R4) */
+const PAGE_SCRIPT = [
+  "document.body.classList.add('is-translucent');",
+  "document.body.style.setProperty('--workspace-background-translucent','transparent');",
+  "document.body.style.setProperty('--titlebar-background','transparent');",
+  "document.body.style.setProperty('--titlebar-background-focused','transparent');",
+  "true"
+].join("");
+
+/* すでに付いているかの確認。 (R3) */
+const PAGE_CHECK = "document.body.classList.contains('is-translucent')";
+
+/* 無効化時の巻き戻し。 (R6) */
+const UNDO_SCRIPT = [
+  "document.body.classList.remove('is-translucent');",
+  "['--workspace-background-translucent','--titlebar-background','--titlebar-background-focused']",
+  ".forEach(n => document.body.style.removeProperty(n));",
+  "true"
+].join("");
+
+/* ========================================================================== */
 
 module.exports = class LiquidGlassBackdrop extends Plugin {
   onload() {
     this.remote = this.loadRemote();
     if (!this.remote) {
       console.warn(
-        "[liquid-glass-backdrop] @electron/remote を読み込めないため、何もしません（デスクトップ版 Obsidian でのみ動作します）。"
+        "[liquid-glass-backdrop] @electron/remote を読み込めません。デスクトップ版 Obsidian でのみ動作します。何もしません。"
       );
       return;
     }
 
-    /* このプラグインが動いているウィンドウ＝メインウィンドウ。
-       ここを基準に「それ以外＝ポップアウト」と判定します。 */
+    /* このプラグインが動いているウィンドウ＝メインウィンドウ。 (R5) */
     this.mainWindowId = this.detectMainWindowId();
     if (this.mainWindowId === null && !INCLUDE_MAIN_WINDOW) {
       console.warn(
-        "[liquid-glass-backdrop] メインウィンドウを特定できませんでした。安全のため何もしません。"
+        "[liquid-glass-backdrop] メインウィンドウを特定できません。安全のため何もしません。"
       );
       return;
     }
 
-    this.focusHooked = new Set();
+    this.prepared = new Set(); /* ページ側の処理が済んだウィンドウ id */
+    this.focusHooked = new Set(); /* フォーカス時に当て直すフックを張った id */
+    this.ticks = 0;
 
-    this.applyAll(); /* 起動時（開いていたポップアウトも含む） */
-    this.timer = setInterval(() => this.applyAll(), SAFETY_INTERVAL_MS);
+    this.applyAll(true); /* (R2a) 有効化時に開いているポップアウト */
+    this.timer = setInterval(() => this.tick(), SAFETY_INTERVAL_MS); /* (R2d) */
 
-    /* 新しいポップアウトは「出来た後」に当てる。 */
     this.registerEvent(
       this.app.workspace.on("window-open", () => {
-        WINDOW_OPEN_RETRIES.forEach((delay) =>
-          setTimeout(() => this.applyAll(), delay)
+        OPEN_RETRY_DELAYS.forEach((delay) =>
+          setTimeout(() => this.applyAll(true), delay)
         );
       })
-    );
+    ); /* (R2b) */
   }
 
   onunload() {
@@ -105,13 +124,13 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
       try {
         win.setBackgroundMaterial("none");
       } catch (e) {
-        /* 対応していない環境では無視 */
+        /* 非対応環境では無視 */
       }
       this.run(win, UNDO_SCRIPT);
     }
-  }
+  } /* (R6) */
 
-  /* --- 内部 ------------------------------------------------------------- */
+  /* --- 内部 --------------------------------------------------------------- */
 
   loadRemote() {
     try {
@@ -119,16 +138,17 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
       const remote = req("@electron/remote");
       return remote && remote.BrowserWindow ? remote : null;
     } catch (e) {
-      return null;
+      return null; /* (N2) */
     }
   }
 
+  /* プラグイン自身のウィンドウをメインとみなす。特定できなければ null。 (R5)(N1) */
   detectMainWindowId() {
     try {
       const win = this.remote.getCurrentWindow?.();
       if (win && typeof win.id === "number") return win.id;
     } catch (e) {
-      /* 次の方法を試す */
+      /* 次の方法へ */
     }
     try {
       const wc = this.remote.getCurrentWebContents?.();
@@ -140,7 +160,7 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
     return null;
   }
 
-  /* 触ってよいウィンドウ（既定ではメイン以外＝ポップアウト）。 */
+  /* 触ってよいウィンドウ＝メイン以外（ポップアウト）。 (R5) */
   targets() {
     let all = [];
     try {
@@ -155,6 +175,8 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
         return false;
       }
       if (INCLUDE_MAIN_WINDOW) return true;
+      /* メインを特定できていないときは、安全側で誰も触らない。 (N1) */
+      if (typeof this.mainWindowId !== "number") return false;
       return win.id !== this.mainWindowId;
     });
   }
@@ -163,50 +185,66 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
     try {
       return win.webContents.executeJavaScript(script);
     } catch (e) {
-      return null;
+      return null; /* (N2) */
     }
   }
 
-  applyAll() {
+  tick() {
+    this.ticks += 1;
+    this.applyAll(this.ticks % PAGE_RECHECK_EVERY === 0);
+  }
+
+  /* 全てのポップアウトに当てる。verifyPages が真ならページ側も確認し直す。 */
+  applyAll(verifyPages) {
+    const alive = new Set();
     for (const win of this.targets()) {
-      this.applyMaterial(win);
-      this.applyPage(win);
-      this.hookFocus(win);
+      alive.add(win.id);
+      this.applyMaterial(win); /* (R1)(R2) */
+      this.hookFocus(win); /* (R2c) */
+      if (verifyPages || !this.prepared.has(win.id)) this.preparePage(win); /* (R3)(R4) */
+    }
+    /* 閉じたウィンドウの記録を掃除（id が再利用されても確認し直せるように） */
+    for (const id of Array.from(this.prepared)) {
+      if (!alive.has(id)) this.prepared.delete(id);
     }
   }
 
-  /* (A) OS に素材を描かせる。 */
   applyMaterial(win) {
     try {
       win.setBackgroundMaterial(MATERIAL);
+      if (DEBUG) console.info("[liquid-glass-backdrop] material -> #" + win.id);
     } catch (e) {
-      /* 対応していない Windows では無視 */
+      /* 対応していない Windows では無視 (N2) */
     }
   }
 
-  /* (B) テーマの透明化。1回で足りるので、付いていなければ付けるだけ。 */
-  applyPage(win) {
-    const check = this.run(
-      win,
-      "document.body.classList.contains('is-translucent')"
-    );
-    if (check && typeof check.then === "function") {
-      check
-        .then((has) => {
-          if (!has) this.run(win, PAGE_SCRIPT);
-        })
-        .catch(() => {});
+  /* ページ側。付いていなければ付けるだけ（1回で足りる）。 */
+  preparePage(win) {
+    const check = this.run(win, PAGE_CHECK);
+    if (!check || typeof check.then !== "function") {
+      this.prepared.add(win.id); /* 確認できない環境では諦める (N2) */
+      return;
     }
+    check
+      .then((has) => {
+        if (!has) {
+          this.run(win, PAGE_SCRIPT);
+          if (DEBUG) console.info("[liquid-glass-backdrop] is-translucent -> #" + win.id);
+        }
+        this.prepared.add(win.id);
+      })
+      .catch(() => {
+        this.prepared.add(win.id);
+      });
   }
 
-  /* 前面に来たときに当て直す（Obsidian 側で作り直されることがあるため）。 */
   hookFocus(win) {
     if (this.focusHooked.has(win.id)) return;
     this.focusHooked.add(win.id);
     try {
-      win.on("focus", () => this.applyMaterial(win));
+      win.on("focus", () => this.applyMaterial(win)); /* (R2c) */
     } catch (e) {
-      /* イベントを張れない環境では無視（保険の当て直しが担当する） */
+      /* 張れない環境では保険の当て直しが担当 (N2) */
     }
   }
 };
