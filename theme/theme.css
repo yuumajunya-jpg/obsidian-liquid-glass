@@ -102,7 +102,11 @@ settings:
         default: none
 */
 
-/* rev 2026-10-19c — ポップアウトの透過は「素材を使わない（setOpacity で薄くする）」が既定に
+/* rev 2026-10-20c — パネルの影を「縁に沿う接触影」に変更。ぼかしの大きい影は
+   パネル同士のすき間（＝壁紙が見える場所）を黒ずませ、半透明＋backdrop-filter の
+   ガラス内側にもにじんで「色が濃い部分」になっていたため。--lg-panel-shadow 参照。
+   rev 2026-10-20b — ポップアウトの乳白層を削除。Acrylic を適用した
+   ポップアウト（lg-popout-acrylic）は、テーマ側の背景を塗らない。
    コピーが最新かどうかは、この rev 行で確認できます。 */
 
 /* ==========================================================================
@@ -186,9 +190,16 @@ body {
   --lg-rim-top: rgba(255, 255, 255, 0.20);      /* 上辺のスペキュラ */
   --lg-rim-top-soft: rgba(255, 255, 255, 0.06);
   --lg-rim-outline: rgba(255, 255, 255, 0.10);  /* 1px の輪郭 */
-  --lg-panel-shadow: 0 1px 1px rgba(0, 0, 0, 0.10),
-                     0 8px 24px rgba(0, 0, 0, 0.22),
-                     0 24px 60px rgba(0, 0, 0, 0.26);
+  /* パネルの影は「縁に沿う接触影」に留める（ぼかしは 8px 以下）。
+     パネルは 10px のすき間を空けて並ぶので、ぼかしの大きい影を落とすと
+     そのすき間＝壁紙が見える場所が一様に黒ずみ、パネル自身が半透明＋
+     backdrop-filter であるために、黒ずんだすき間がガラスの内側
+     （とくに角）へにじんで「色が濃い部分」として見えてしまう。
+     ぼかしを 8px 以下にすると、すき間の壁紙は素の明るさのまま保たれる。
+     （影のぼかしはすき間の幅とセットで考えること。--lg-gap を大きくするなら
+     この値も少し大きくしてよい。） */
+  --lg-panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.14),
+                     0 3px 8px rgba(0, 0, 0, 0.10);
   --lg-float-shadow: 0 2px 8px rgba(0, 0, 0, 0.18),
                      0 16px 48px rgba(0, 0, 0, 0.36),
                      0 40px 100px rgba(0, 0, 0, 0.30);
@@ -225,12 +236,6 @@ body {
     radial-gradient(52% 52% at 86% 10%, rgba(106, 92, 255, 0.40) 0%, rgba(106, 92, 255, 0) 64%),
     radial-gradient(66% 66% at 80% 88%, rgba(34, 211, 238, 0.30) 0%, rgba(34, 211, 238, 0) 66%),
     radial-gradient(58% 58% at 18% 92%, rgba(168, 85, 247, 0.36) 0%, rgba(168, 85, 247, 0) 62%);
-
-  /* ポップアウトに OS の背景素材（Acrylic）を使ったとき、素材の上に敷く「膜」。
-     素材のぼかし量は OS が決めていて弱くできないため、素材が強すぎるときに
-     これで隠す。既定は 0（＝素材そのまま。ぼかしを使わないなら出番はない）。
-     0.35 で淡いガラス / 0.7 以上で素材をほぼ隠す。色ごと差し替えてよい。 */
-  --lg-popout-veil: rgba(8, 10, 18, 0);
 }
 
 body.theme-light {
@@ -248,9 +253,9 @@ body.theme-light {
   --lg-rim-top-soft: rgba(255, 255, 255, 0.45);
   /* ライトでは白い輪郭が見えないので、輪郭だけ少し暗くする */
   --lg-rim-outline: rgba(58, 68, 104, 0.16);
-  --lg-panel-shadow: 0 1px 1px rgba(31, 41, 84, 0.06),
-                     0 8px 24px rgba(31, 41, 84, 0.10),
-                     0 24px 60px rgba(31, 41, 84, 0.10);
+  /* 影も同じ方針で接触影に（ダーク側のコメント参照）。 */
+  --lg-panel-shadow: 0 1px 2px rgba(31, 41, 84, 0.10),
+                     0 3px 8px rgba(31, 41, 84, 0.08);
   --lg-float-shadow: 0 2px 8px rgba(31, 41, 84, 0.10),
                      0 16px 48px rgba(31, 41, 84, 0.18),
                      0 40px 100px rgba(31, 41, 84, 0.14);
@@ -274,9 +279,6 @@ body.theme-light {
     radial-gradient(52% 52% at 86% 10%, rgba(142, 162, 255, 0.55) 0%, rgba(142, 162, 255, 0) 64%),
     radial-gradient(66% 66% at 80% 88%, rgba(126, 231, 255, 0.50) 0%, rgba(126, 231, 255, 0) 66%),
     radial-gradient(58% 58% at 18% 92%, rgba(195, 156, 255, 0.50) 0%, rgba(195, 156, 255, 0) 62%);
-
-  /* ポップアウトを透かしたときの膜（ライトは白い膜）。既定は 0。 */
-  --lg-popout-veil: rgba(238, 242, 252, 0);
 }
 
 /* モバイルではすき間を無くす（寸法を動かさないため） */
@@ -326,11 +328,20 @@ body.is-translucent.lg-no-wallpaper {
   background-image: none;
 }
 
-/* ポップアウトだけのつまみ。素材の上に膜（--lg-popout-veil）を敷いて、
-   「素材がどれくらい見えるか」をこちら側で決められるようにする。
-   メインウィンドウには効かない（is-popout-window はポップアウトにしか付かない）。 */
-body.is-popout-window.is-translucent {
-  background-color: var(--lg-popout-veil);
+/* Acrylic を適用したポップアウトは、テーマ側の背景を塗らない。
+   補助プラグインが lg-popout-acrylic を付けたときだけ効く。
+   メインウィンドウと、Acrylic 非適用のポップアウトは従来どおり。 */
+body.is-popout-window.lg-popout-acrylic {
+  --workspace-background-translucent: transparent;
+  --titlebar-background: transparent;
+  --titlebar-background-focused: transparent;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* テーマの壁紙写真レイヤーも止める。 */
+body.is-popout-window.lg-popout-acrylic::before {
+  display: none !important;
 }
 
 /* Obsidian 側が .theme-dark / .theme-light で定義している変数は、素の body では
