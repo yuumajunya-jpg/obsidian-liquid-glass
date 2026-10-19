@@ -102,7 +102,7 @@ settings:
         default: none
 */
 
-/* rev 2026-10-17f — 角丸は元の 1 に戻した（エディタのアクティブ行だけスケールに統合）／ コールアウトの色味を調整
+/* rev 2026-10-19a — 半透明ウィンドウ（is-translucent）対応：不透明な下地を外した「幽霊壁紙」を追加
    コピーが最新かどうかは、この rev 行で確認できます。 */
 
 /* ==========================================================================
@@ -218,6 +218,13 @@ body {
     radial-gradient(66% 66% at 80% 88%, rgba(34, 211, 238, 0.30) 0%, rgba(34, 211, 238, 0) 66%),
     radial-gradient(58% 58% at 18% 92%, rgba(168, 85, 247, 0.36) 0%, rgba(168, 85, 247, 0) 62%),
     linear-gradient(160deg, #12142a 0%, #0a0b16 55%, #05060c 100%);
+  /* 半透明ウィンドウ用の「幽霊壁紙」。--lg-wallpaper から不透明な下地
+     （最後の linear-gradient）だけを抜いたもので、OS が描く背景素材（Acrylic 等）が透ける。 */
+  --lg-wallpaper-ghost:
+    radial-gradient(58% 58% at 14% 16%, rgba(255, 95, 143, 0.34) 0%, rgba(255, 95, 143, 0) 62%),
+    radial-gradient(52% 52% at 86% 10%, rgba(106, 92, 255, 0.40) 0%, rgba(106, 92, 255, 0) 64%),
+    radial-gradient(66% 66% at 80% 88%, rgba(34, 211, 238, 0.30) 0%, rgba(34, 211, 238, 0) 66%),
+    radial-gradient(58% 58% at 18% 92%, rgba(168, 85, 247, 0.36) 0%, rgba(168, 85, 247, 0) 62%);
 }
 
 body.theme-light {
@@ -256,6 +263,11 @@ body.theme-light {
     radial-gradient(66% 66% at 80% 88%, rgba(126, 231, 255, 0.50) 0%, rgba(126, 231, 255, 0) 66%),
     radial-gradient(58% 58% at 18% 92%, rgba(195, 156, 255, 0.50) 0%, rgba(195, 156, 255, 0) 62%),
     linear-gradient(160deg, #f9fbff 0%, #eef1f8 55%, #e5ebf7 100%);
+  --lg-wallpaper-ghost:
+    radial-gradient(58% 58% at 14% 16%, rgba(255, 158, 199, 0.55) 0%, rgba(255, 158, 199, 0) 62%),
+    radial-gradient(52% 52% at 86% 10%, rgba(142, 162, 255, 0.55) 0%, rgba(142, 162, 255, 0) 64%),
+    radial-gradient(66% 66% at 80% 88%, rgba(126, 231, 255, 0.50) 0%, rgba(126, 231, 255, 0) 66%),
+    radial-gradient(58% 58% at 18% 92%, rgba(195, 156, 255, 0.50) 0%, rgba(195, 156, 255, 0) 62%);
 }
 
 /* モバイルではすき間を無くす（寸法を動かさないため） */
@@ -288,6 +300,20 @@ body::before {
 /* Style Settings の「壁紙をオフにする」で付くクラス */
 body.lg-no-wallpaper {
   background-color: var(--background-primary);
+  background-image: none;
+}
+
+/* 半透明ウィンドウ（Obsidian の "Translucent window"、または Translucent BG などの
+   プラグインが body に is-translucent を付けた状態）では、ウィンドウの背景は OS が
+   描く素材（Acrylic / Mica）になる。テーマが不透明な下地を塗ると素材が隠れてしまうので、
+   不透明な下地を持たない「幽霊壁紙」（--lg-wallpaper-ghost）に差し替える。
+   壁紙をオフにしている場合は、下地も描かず完全に透明にして素材だけを見せる。 */
+body.is-translucent {
+  background-color: transparent;
+  background-image: var(--lg-wallpaper-ghost);
+}
+
+body.is-translucent.lg-no-wallpaper {
   background-image: none;
 }
 

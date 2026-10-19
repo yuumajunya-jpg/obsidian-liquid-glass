@@ -105,6 +105,23 @@ body { --lg-quote: rgba(255, 255, 255, 0.12); }
 出していません。変えたい場合は `--lg-chrome-color` / `--lg-surface-color`（ベース色）と
 `--lg-chrome-alpha` / `--lg-surface-alpha`（不透明度）を上書きしてください。
 
+#### 半透明ウィンドウ（Acrylic / Mica）
+
+Windows でウィンドウの背景を OS の素材（Acrylic / Mica）にすると、ウィンドウ越しに
+背後のアプリやデスクトップが透けます。Obsidian 本体の「Translucent window」設定、
+または [Translucent BG](https://github.com/MellowMarsh-Git/Obsidian-Translucent-BG)
+などのプラグインで有効にすると、`body` に `is-translucent` が付きます。
+
+そのときテーマは、不透明な下地を持たない `--lg-wallpaper-ghost`（メッシュだけの壁紙）に
+自動で差し替えます。下地が消えるので OS の素材がそのまま透け、テーマの色味だけが
+上に乗ります。「壁紙をオフにする」を併用している場合は、下地も描かず完全に透明に
+なります（素材だけが見える状態）。
+
+- テーマ側の判定は `is-translucent` だけなので、どのウィンドウでも同じように効きます。
+- OS 側がすでにぼかしているため、テーマのぼかしと二重になります。気になる場合は
+  Style Settings の「背景のぼかし」を `0` にしてください。
+- 色味は `--lg-wallpaper-ghost` を上書きして調整できます。
+
 ---
 
 ## 設計メモ
