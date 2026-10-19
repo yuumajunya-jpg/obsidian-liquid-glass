@@ -150,17 +150,18 @@ node serve.js
 2. `theme/theme.css` / `theme/manifest.json` / `theme/versions.json` をコピーする
 3. Obsidian → 設定 → 外観 → テーマ で「Liquid Glass」を選ぶ
 
-> ウィンドウ自体を透かしたい場合は、テーマ側が `is-translucent` を検知して
-> 壁紙を「幽霊壁紙」に差し替えます（`theme/README.md` の「半透明ウィンドウ」参照）。
-> ポップアウトも透かすには `plugin/liquid-glass-backdrop/` を併用してください。
+> ウィンドウ自体を透かしたい場合、テーマ側は `is-translucent` を検知して壁紙を
+> 「幽霊壁紙」に差し替えます（`theme/README.md` の「半透明ウィンドウ」参照）。
+> ただし**メインウィンドウは既定で不透明のまま**です。透かすのはポップアウトだけで
+> 足りるので、Translucent BG / Pseudo Mica のようなプラグインは不要です。
 
-### ポップアウトも透かす（補助プラグイン / 任意）
+### ポップアウトだけを透かす（補助プラグイン / 任意）
 1. ボルトの `.obsidian/plugins/liquid-glass-backdrop/` を作る
 2. `plugin/liquid-glass-backdrop/main.js` と `manifest.json` をコピーする
 3. Obsidian を再起動 → 設定 → コミュニティプラグイン で「Liquid Glass — Backdrop」を有効化
 
-> このプラグインは**ポップアウト専門**で、メインウィンドウには触りません。
-> メインは既存の Translucent BG / Pseudo Mica とテーマに任せます。
+> このプラグインは**ポップアウト専門**で、メインウィンドウには何も書き込みません。
+> Translucent BG / Pseudo Mica は無効化して構いません。
 
 ### CSSスニペットとして当てる（手軽に試す用）
 1. ボルトの `.obsidian/snippets/` に `theme/theme.css` を `liquid-glass.css` 等の
