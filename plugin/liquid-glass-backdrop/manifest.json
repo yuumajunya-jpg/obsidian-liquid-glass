@@ -1,0 +1,9 @@
+{
+  "id": "liquid-glass-backdrop",
+  "name": "Liquid Glass — Backdrop",
+  "version": "1.0.0",
+  "minAppVersion": "1.6.0",
+  "description": "Applies the Windows backdrop material (Acrylic / Mica) to every window, including pop-outs, so the Liquid Glass theme can show through them.",
+  "author": "Liquid Glass (local)",
+  "isDesktopOnly": true
+}

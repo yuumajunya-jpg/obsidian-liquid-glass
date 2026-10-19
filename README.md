@@ -16,6 +16,7 @@ Obsidian のデフォルトテーマを iOS 26 の **Liquid Glass**（すりガ�
 | `theme/manifest.json` | テーマ名・バージョン・最低対応バージョン | 約0.2KB |
 | `theme/versions.json` | バージョンと最低対応 Obsidian の対応表 | — |
 | `theme/README.md` | テーマのインストール / カスタマイズ / 設計メモ | — |
+| `plugin/liquid-glass-backdrop/` | 補助プラグイン（任意）。全ウィンドウに Windows の背景素材（Acrylic/Mica）を当てて、ポップアウトも透かす | 約2KB |
 | `app.css` | Obsidian 本体から抽出した**元のCSSそのまま**。PDF.js のCSS + Obsidian デフォルトテーマの合成物。加工はしていない | 約586KB |
 | `obsidian-default.css` | `app.css` から **Obsidian デフォルトテーマ部分だけ** を切り出したもの。改修対象の土台 | 約550KB |
 | `liquid-glass.css` | **旧試作（レガシー）**。`theme/theme.css` に置き換わった。参照用に残置 | 約20KB |
@@ -149,7 +150,17 @@ node serve.js
 2. `theme/theme.css` / `theme/manifest.json` / `theme/versions.json` をコピーする
 3. Obsidian → 設定 → 外観 → テーマ で「Liquid Glass」を選ぶ
 
-> 設定 → 外観 の **「半透明のウィンドウ」はオフ推奨**（OS の透過と壁紙が競合します）。
+> ウィンドウ自体を透かしたい場合は、テーマ側が `is-translucent` を検知して
+> 壁紙を「幽霊壁紙」に差し替えます（`theme/README.md` の「半透明ウィンドウ」参照）。
+> ポップアウトも透かすには `plugin/liquid-glass-backdrop/` を併用してください。
+
+### ポップアウトも透かす（補助プラグイン / 任意）
+1. ボルトの `.obsidian/plugins/liquid-glass-backdrop/` を作る
+2. `plugin/liquid-glass-backdrop/main.js` と `manifest.json` をコピーする
+3. Obsidian を再起動 → 設定 → コミュニティプラグイン で「Liquid Glass — Backdrop」を有効化
+
+> このプラグインは**ポップアウト専門**で、メインウィンドウには触りません。
+> メインは既存の Translucent BG / Pseudo Mica とテーマに任せます。
 
 ### CSSスニペットとして当てる（手軽に試す用）
 1. ボルトの `.obsidian/snippets/` に `theme/theme.css` を `liquid-glass.css` 等の

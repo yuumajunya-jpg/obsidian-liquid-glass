@@ -122,6 +122,26 @@ Windows でウィンドウの背景を OS の素材（Acrylic / Mica）にする
   Style Settings の「背景のぼかし」を `0` にしてください。
 - 色味は `--lg-wallpaper-ghost` を上書きして調整できます。
 
+##### ポップアウトも透かす（補助プラグイン）
+
+ポップアウト（別ウィンドウ）は、Obsidian がウィンドウを生成する流れの中で背景素材を
+上書きしてしまうため、既存のプラグイン（メインウィンドウ1枚にしか効かない作り）では
+透けません。素材を当てるのは CSS の仕事ではないので、テーマ側だけでは手が出せない
+部分です。そこで `plugin/liquid-glass-backdrop/`（ローカル補助プラグイン）を同梱して
+います。
+
+1. ボルトの `.obsidian/plugins/liquid-glass-backdrop/` を作る
+2. `plugin/liquid-glass-backdrop/main.js` と `manifest.json` をコピーする
+3. Obsidian を再起動 → 設定 → コミュニティプラグイン で有効化
+
+- **メインウィンドウには触りません**（ポップアウト専門）。メインは既存の
+  Translucent BG / Pseudo Mica とテーマに任せる切り分けです。
+- 素材は `main.js` の `MATERIAL` で変えられます（`acrylic` / `mica` / `tabbed`）。
+- メインもまとめてこのプラグインに任せたいときは `INCLUDE_MAIN_WINDOW` を `true` に
+  してください（その場合は他プラグインをオフに）。
+- プラグインを切ると、ポップアウトは元の不透明な見た目に戻ります（`is-translucent` も
+  外します）。
+
 ---
 
 ## 設計メモ
