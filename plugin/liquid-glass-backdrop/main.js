@@ -27,21 +27,33 @@
    R5 メインウィンドウには一切書き込まない
    R6 無効化したら、ポップアウトだけ元に戻す
    R7 設定はこのファイル冒頭の定数
+   R8 濃さ（OPACITY）もつまみとして出す。素材のぼかしは弱くできないので、
+      ぼけが強すぎるときはここを 1 未満にして「ぼけていない背景」を混ぜる
 
    やらないこと: ウィンドウの角丸・影・形の変更（OS 領域）、メインウィンドウの
-   半透明化、透け方の色やぼかし量の制御（OS 依存）、Obsidian 本体設定の変更。
+   半透明化、ぼかし量そのものの変更（OS 依存。OPACITY とテーマ側の膜で調整する）、
+   Obsidian 本体設定の変更。
    ========================================================================== */
 
 const { Plugin } = require("obsidian");
 
 /* --- 設定 (R7) ------------------------------------------------------------ */
 
-/* 適用する背景素材。
+/* 適用する背景素材。'auto' / 'acrylic' / 'mica' / 'tabbed' / 'none'。
      'acrylic' … 背後のウィンドウをぼかす（ポップアウト向き・既定）
-     'mica'    … デスクトップの壁紙を写す
+     'auto'    … OS に任せる（Windows 11 では Mica 系になる）
+     'mica'    … デスクトップの壁紙を写す（ぼかしは弱い）
      'tabbed'  … タブ付きタイトルバー相当
      'none'    … 素材なし */
 const MATERIAL = "acrylic";
+
+/* ポップアウトの濃さ。1 = そのまま（素材のぼかしがそのまま出る）。
+   素材のぼかし量は OS 固定で弱くできないため、「ぼけが強すぎる」ときのつまみは
+   これと、テーマ側の膜（--lg-popout-veil）の2つ。
+   1 未満にすると、ぼけた素材の上に「ぼけていない背景」が (1 - OPACITY) の割合で
+   乗るので、ぼけの主張が弱くなる。副作用として文字も同じ割合で薄くなる
+   （0.9 以上なら実用範囲 / 0.8 を切ると読みにくい）。 */
+const OPACITY = 1;
 
 /* メインウィンドウもこのプラグインに任せるか。既定 false＝メインは触らない (R5)。 */
 const INCLUDE_MAIN_WINDOW = false;
@@ -126,6 +138,11 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
       } catch (e) {
         /* 非対応環境では無視 */
       }
+      try {
+        win.setOpacity(1);
+      } catch (e) {
+        /* 非対応環境では無視 */
+      }
       this.run(win, UNDO_SCRIPT);
     }
   } /* (R6) */
@@ -199,7 +216,7 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
     const alive = new Set();
     for (const win of this.targets()) {
       alive.add(win.id);
-      this.applyMaterial(win); /* (R1)(R2) */
+      this.applyWindow(win); /* (R1)(R2)(R8) */
       this.hookFocus(win); /* (R2c) */
       if (verifyPages || !this.prepared.has(win.id)) this.preparePage(win); /* (R3)(R4) */
     }
@@ -209,12 +226,20 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
     }
   }
 
-  applyMaterial(win) {
+  /* 素材と濃さを当てる。 (R1)(R2)(R8) */
+  applyWindow(win) {
     try {
       win.setBackgroundMaterial(MATERIAL);
       if (DEBUG) console.info("[liquid-glass-backdrop] material -> #" + win.id);
     } catch (e) {
       /* 対応していない Windows では無視 (N2) */
+    }
+    if (OPACITY !== 1) {
+      try {
+        win.setOpacity(OPACITY);
+      } catch (e) {
+        /* 無視 (N2) */
+      }
     }
   }
 
@@ -242,7 +267,7 @@ module.exports = class LiquidGlassBackdrop extends Plugin {
     if (this.focusHooked.has(win.id)) return;
     this.focusHooked.add(win.id);
     try {
-      win.on("focus", () => this.applyMaterial(win)); /* (R2c) */
+      win.on("focus", () => this.applyWindow(win)); /* (R2c) */
     } catch (e) {
       /* 張れない環境では保険の当て直しが担当 (N2) */
     }

@@ -102,7 +102,7 @@ settings:
         default: none
 */
 
-/* rev 2026-10-19a — 半透明ウィンドウ（is-translucent）対応：不透明な下地を外した「幽霊壁紙」を追加
+/* rev 2026-10-19b — ポップアウトの透過を調整できるように：素材の上に敷く膜 --lg-popout-veil を追加
    コピーが最新かどうかは、この rev 行で確認できます。 */
 
 /* ==========================================================================
@@ -225,6 +225,12 @@ body {
     radial-gradient(52% 52% at 86% 10%, rgba(106, 92, 255, 0.40) 0%, rgba(106, 92, 255, 0) 64%),
     radial-gradient(66% 66% at 80% 88%, rgba(34, 211, 238, 0.30) 0%, rgba(34, 211, 238, 0) 66%),
     radial-gradient(58% 58% at 18% 92%, rgba(168, 85, 247, 0.36) 0%, rgba(168, 85, 247, 0) 62%);
+
+  /* ポップアウトを透かしたとき、素材（OS の Acrylic）の上に敷く「膜」。
+     素材のぼかし量は OS が決めていて変えられないため、見え方はこの膜の濃さで
+     決める。0 = 素材そのまま（ぼかしが一番強い）/ 0.35 = 淡いガラス（既定）/
+     0.7〜0.9 = 素材をほぼ隠す。色ごと差し替えてよい。 */
+  --lg-popout-veil: rgba(8, 10, 18, 0.35);
 }
 
 body.theme-light {
@@ -268,6 +274,9 @@ body.theme-light {
     radial-gradient(52% 52% at 86% 10%, rgba(142, 162, 255, 0.55) 0%, rgba(142, 162, 255, 0) 64%),
     radial-gradient(66% 66% at 80% 88%, rgba(126, 231, 255, 0.50) 0%, rgba(126, 231, 255, 0) 66%),
     radial-gradient(58% 58% at 18% 92%, rgba(195, 156, 255, 0.50) 0%, rgba(195, 156, 255, 0) 62%);
+
+  /* ポップアウトを透かしたときの膜（ライトは白い膜）。 */
+  --lg-popout-veil: rgba(238, 242, 252, 0.35);
 }
 
 /* モバイルではすき間を無くす（寸法を動かさないため） */
@@ -315,6 +324,13 @@ body.is-translucent {
 
 body.is-translucent.lg-no-wallpaper {
   background-image: none;
+}
+
+/* ポップアウトだけのつまみ。素材の上に膜（--lg-popout-veil）を敷いて、
+   「素材がどれくらい見えるか」をこちら側で決められるようにする。
+   メインウィンドウには効かない（is-popout-window はポップアウトにしか付かない）。 */
+body.is-popout-window.is-translucent {
+  background-color: var(--lg-popout-veil);
 }
 
 /* Obsidian 側が .theme-dark / .theme-light で定義している変数は、素の body では
