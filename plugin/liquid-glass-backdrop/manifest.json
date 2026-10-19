@@ -1,9 +1,9 @@
 {
   "id": "liquid-glass-backdrop",
   "name": "Liquid Glass — Backdrop",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "minAppVersion": "1.6.0",
-  "description": "Pop-out windows only: applies the Windows backdrop material (Acrylic / Mica) so the Liquid Glass theme can show through them. The main window is left untouched.",
+  "description": "Pop-out windows only: applies Windows 11 Acrylic (22H2+) via setBackgroundMaterial and marks them with lg-popout-acrylic. The main window is left untouched.",
   "author": "Liquid Glass (local)",
   "isDesktopOnly": true
 }

@@ -16,7 +16,7 @@ Obsidian のデフォルトテーマを iOS 26 の **Liquid Glass**（すりガ�
 | `theme/manifest.json` | テーマ名・バージョン・最低対応バージョン | 約0.2KB |
 | `theme/versions.json` | バージョンと最低対応 Obsidian の対応表 | — |
 | `theme/README.md` | テーマのインストール / カスタマイズ / 設計メモ | — |
-| `plugin/liquid-glass-backdrop/` | 補助プラグイン（任意）。全ウィンドウに Windows の背景素材（Acrylic/Mica）を当てて、ポップアウトも透かす | 約2KB |
+| `plugin/liquid-glass-backdrop/` | 補助プラグイン（任意）。ポップアウトだけに Windows 11 の Acrylic を適用し、識別用フラグを付ける | 約9KB |
 | `app.css` | Obsidian 本体から抽出した**元のCSSそのまま**。PDF.js のCSS + Obsidian デフォルトテーマの合成物。加工はしていない | 約586KB |
 | `obsidian-default.css` | `app.css` から **Obsidian デフォルトテーマ部分だけ** を切り出したもの。改修対象の土台 | 約550KB |
 | `liquid-glass.css` | **旧試作（レガシー）**。`theme/theme.css` に置き換わった。参照用に残置 | 約20KB |
@@ -150,9 +150,11 @@ node serve.js
 2. `theme/theme.css` / `theme/manifest.json` / `theme/versions.json` をコピーする
 3. Obsidian → 設定 → 外観 → テーマ で「Liquid Glass」を選ぶ
 
-> ウィンドウ自体を透かしたい場合、テーマ側は `is-translucent` を検知して壁紙を
+> ウィンドウ自体を透かしたい場合、テーマ側は `is-translucent`
+> （Obsidian 本体の設定や他プラグイン）を検知して壁紙を
 > 「幽霊壁紙」に差し替えます（`theme/README.md` の「半透明ウィンドウ」参照）。
-> ただし**メインウィンドウは既定で不透明のまま**です。透かすのはポップアウトだけで
+> ポップアウトは同梱の補助プラグインで Windows 11 の Acrylic を適用します（後述）。
+> **メインウィンドウは既定で不透明のまま**です。透かすのはポップアウトだけで
 > 足りるので、Translucent BG / Pseudo Mica のようなプラグインは不要です。
 
 ### ポップアウトだけを透かす（補助プラグイン / 任意）
@@ -165,14 +167,24 @@ node serve.js
 
 **透け方**
 
-`setOpacity` でウィンドウ全体を薄くするだけです。OS の素材（Acrylic）もぼかしも
-使わないので、背後が**ぼけずにそのまま**見えます。透け具合は `main.js` 冒頭の
-`OPACITY`（既定 `0.75`）の1つだけで、小さいほど透けます
-（`0.9` 控えめ / `0.75` 既定 / `0.6` かなり。文字も同じ割合で薄くなります）。
+Windows 11 の `setBackgroundMaterial("acrylic")` をポップアウトに適用します。
+OS がデスクトップをぼかすため、`setOpacity` のように文字まで薄くなりません。
+Windows 11 22H2 以降でのみ動きます。Obsidian の「外観 → ウィンドウ枠の
+スタイル」は「非表示 / Obsidian フレーム」にすると安定します。
 
-適用は**有効化時**と**ポップアウトを開いたとき**の2回だけです。タイマーによる再適用は
-ありません（`setOpacity` はウィンドウの属性なので1回で確定し、ページの読み込み完了も
-待たなくてよいため）。
+適用したポップアウトの `body` には `lg-popout-translucent` と
+`lg-popout-acrylic` が付きます。テーマは `lg-popout-acrylic` を見て、
+そのウィンドウの背景（壁紙）だけを塗らず、Acrylic をそのまま見せます。
+
+適用は**有効化時**と**ポップアウトを開いたとき**の2回だけです。タイマーによる
+再適用はありません（素材はウィンドウの属性なので1回で確定します）。
+
+**ポップアウトの見た目（CSS）**
+
+ポップアウトはメインウィンドウと同じ CSS を使います。唯一の例外は、Acrylic を
+適用したポップアウト（`body.is-popout-window.lg-popout-acrylic`）で背景まわり
+（`body` とタイトルバー用の変数）だけを設定しないことです。パネル・角丸・文字・
+ぼかしはメインと同じです。
 
 ### CSSスニペットとして当てる（手軽に試す用）
 1. ボルトの `.obsidian/snippets/` に `theme/theme.css` を `liquid-glass.css` 等の

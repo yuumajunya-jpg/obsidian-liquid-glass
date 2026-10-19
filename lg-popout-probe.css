@@ -12,7 +12,8 @@
      5. 確認が終わったら OFF にする（またはファイルを消す）
 
    やっていること:
-     A) ポップアウトの右上にバッジを出し、body に is-translucent が付いているかを表示
+     A) ポップアウトの右上にバッジを出し、body に Acrylic のフラグ
+        （lg-popout-acrylic / lg-popout-translucent）が付いているかを表示
      B) ポップアウトの背景・パネル・ぼかしを強制的に透明にして、
         「ウィンドウそのものが透明か（＝デスクトップが透けるか）」を試す
         ※ 文字は読みにくくなります。それが正常です（判定用に全透過させています）
@@ -20,7 +21,7 @@
 
 /* --- A) 判定バッジ ------------------------------------------------------- */
 body.is-popout-window::after {
-  content: "probe: is-translucent なし（設定OFF / 未対応）";
+  content: "probe: lg-popout-acrylic なし（プラグインOFF / 未対応）";
   position: fixed;
   top: 8px;
   right: 8px;
@@ -35,8 +36,10 @@ body.is-popout-window::after {
   pointer-events: none;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
+body.is-popout-window.lg-popout-acrylic::after,
+body.is-popout-window.lg-popout-translucent::after,
 body.is-popout-window.is-translucent::after {
-  content: "probe: is-translucent あり（設定ON）";
+  content: "probe: Acrylic フラグあり";
   background: #1b7f3b;
 }
 
